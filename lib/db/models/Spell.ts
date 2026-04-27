@@ -16,6 +16,11 @@ export interface ISpell extends Document {
   higher_levels_uk: string
   classes: string[]
   source: string
+  description_en: string
+  higher_levels_en: string
+  material: string
+  document_slug: string
+  document_title: string
 }
 
 const SpellSchema = new Schema<ISpell>(
@@ -35,6 +40,11 @@ const SpellSchema = new Schema<ISpell>(
     higher_levels_uk: { type: String, default: '' },
     classes: [{ type: String }],
     source: { type: String, default: 'open5e' },
+    description_en: { type: String, default: '' },
+    higher_levels_en: { type: String, default: '' },
+    material: { type: String, default: '' },
+    document_slug: { type: String, default: '' },
+    document_title: { type: String, default: '' },
   },
   { timestamps: true },
 )

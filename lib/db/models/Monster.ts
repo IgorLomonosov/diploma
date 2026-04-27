@@ -8,6 +8,8 @@ export interface IMonster extends Document {
   type: string
   alignment: string
   armor_class: number
+  armor_desc: string
+  initiative_bonus: number
   hit_points: number
   hit_dice: string
   speed: string
@@ -17,12 +19,31 @@ export interface IMonster extends Document {
   intelligence: number
   wisdom: number
   charisma: number
+  strength_save: number | null
+  dexterity_save: number | null
+  constitution_save: number | null
+  intelligence_save: number | null
+  wisdom_save: number | null
+  charisma_save: number | null
+  skills: string
+  damage_resistances: string
+  damage_immunities: string
+  condition_immunities: string
+  senses: string
+  languages: string
   challenge_rating: string
+  xp: number
+  img_main: string
+  description_en: string
   description_uk: string
   actions: { name: string; description: string }[]
+  reactions: { name: string; description: string }[]
   special_abilities: { name: string; description: string }[]
+  legendary_actions: { name: string; description: string }[]
+  environments: string[]
+  document_slug: string
+  document_title: string
   source: string
-  createdAt: Date
 }
 
 const MonsterSchema = new Schema<IMonster>(
@@ -34,6 +55,8 @@ const MonsterSchema = new Schema<IMonster>(
     type: { type: String, default: '' },
     alignment: { type: String, default: '' },
     armor_class: { type: Number, default: 0 },
+    armor_desc: { type: String, default: '' },
+    initiative_bonus: { type: Number, default: 0 },
     hit_points: { type: Number, default: 0 },
     hit_dice: { type: String, default: '' },
     speed: { type: String, default: '' },
@@ -43,10 +66,30 @@ const MonsterSchema = new Schema<IMonster>(
     intelligence: { type: Number, default: 10 },
     wisdom: { type: Number, default: 10 },
     charisma: { type: Number, default: 10 },
+    strength_save: { type: Number, default: null },
+    dexterity_save: { type: Number, default: null },
+    constitution_save: { type: Number, default: null },
+    intelligence_save: { type: Number, default: null },
+    wisdom_save: { type: Number, default: null },
+    charisma_save: { type: Number, default: null },
+    skills: { type: String, default: '' },
+    damage_resistances: { type: String, default: '' },
+    damage_immunities: { type: String, default: '' },
+    condition_immunities: { type: String, default: '' },
+    senses: { type: String, default: '' },
+    languages: { type: String, default: '' },
     challenge_rating: { type: String, default: '0' },
+    xp: { type: Number, default: 0 },
+    img_main: { type: String, default: '' },
+    description_en: { type: String, default: '' },
     description_uk: { type: String, default: '' },
     actions: [{ name: String, description: String }],
+    reactions: [{ name: String, description: String }],
     special_abilities: [{ name: String, description: String }],
+    legendary_actions: [{ name: String, description: String }],
+    environments: [{ type: String }],
+    document_slug: { type: String, default: '' },
+    document_title: { type: String, default: '' },
     source: { type: String, default: 'open5e' },
   },
   { timestamps: true },
