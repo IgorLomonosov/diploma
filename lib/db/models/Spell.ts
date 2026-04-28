@@ -21,6 +21,11 @@ export interface ISpell extends Document {
   material: string
   document_slug: string
   document_title: string
+  school_uk: string
+  casting_time_uk: string
+  range_uk: string
+  duration_uk: string
+  components_uk: string
 }
 
 const SpellSchema = new Schema<ISpell>(
@@ -45,6 +50,11 @@ const SpellSchema = new Schema<ISpell>(
     material: { type: String, default: '' },
     document_slug: { type: String, default: '' },
     document_title: { type: String, default: '' },
+    school_uk: { type: String, default: '' },
+    casting_time_uk: { type: String, default: '' },
+    range_uk: { type: String, default: '' },
+    duration_uk: { type: String, default: '' },
+    components_uk: { type: String, default: '' },
   },
   { timestamps: true },
 )

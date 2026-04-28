@@ -44,6 +44,15 @@ export interface IMonster extends Document {
   document_slug: string
   document_title: string
   source: string
+  size_uk: string
+  type_uk: string
+  alignment_uk: string
+  skills_uk: string
+  senses_uk: string
+  languages_uk: string
+  damage_resistances_uk: string
+  damage_immunities_uk: string
+  condition_immunities_uk: string
 }
 
 const MonsterSchema = new Schema<IMonster>(
@@ -91,6 +100,15 @@ const MonsterSchema = new Schema<IMonster>(
     document_slug: { type: String, default: '' },
     document_title: { type: String, default: '' },
     source: { type: String, default: 'open5e' },
+    size_uk: { type: String, default: '' },
+    type_uk: { type: String, default: '' },
+    alignment_uk: { type: String, default: '' },
+    skills_uk: { type: String, default: '' },
+    senses_uk: { type: String, default: '' },
+    languages_uk: { type: String, default: '' },
+    damage_resistances_uk: { type: String, default: '' },
+    damage_immunities_uk: { type: String, default: '' },
+    condition_immunities_uk: { type: String, default: '' },
   },
   { timestamps: true },
 )
