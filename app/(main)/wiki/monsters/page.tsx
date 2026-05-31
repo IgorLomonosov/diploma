@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
+import { t } from '@/lib/utils/translations'
 import { Button } from '@/components/ui/button'
 
 interface Monster {
@@ -171,11 +171,9 @@ export default function MonstersPage() {
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="flex flex-wrap gap-1">
+                      <Badge variant="secondary">{t.size(monster.size)}</Badge>
                       <Badge variant="secondary">
-                        {capitalize(monster.size)}
-                      </Badge>
-                      <Badge variant="secondary">
-                        {monster.type_uk || capitalize(monster.type)}
+                        {t.type(monster.type, monster.type_uk)}
                       </Badge>
                       <Badge>CR {monster.challenge_rating}</Badge>
                     </div>

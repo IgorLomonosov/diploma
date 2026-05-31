@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { t } from '@/lib/utils/translations'
 
 interface Spell {
   _id: string
@@ -18,7 +19,9 @@ interface Spell {
   casting_time: string
   casting_time_uk: string
   range: string
+  range_uk: string
   duration: string
+  duration_uk: string
   concentration: boolean
   ritual: boolean
   classes: string[]
@@ -170,9 +173,7 @@ export default function SpellsPage() {
                     <div className="flex flex-wrap gap-1">
                       <Badge>{levelLabel(spell.level)}</Badge>
                       <Badge variant="secondary">
-                        {spell.school_uk ||
-                          SCHOOL_UK[spell.school] ||
-                          spell.school}
+                        {t.school(spell.school, spell.school_uk)}
                       </Badge>
                       {spell.concentration && (
                         <Badge variant="outline">Концентрація</Badge>
@@ -180,8 +181,14 @@ export default function SpellsPage() {
                       {spell.ritual && <Badge variant="outline">Ритуал</Badge>}
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <p>⏱ {spell.casting_time_uk || spell.casting_time}</p>
-                      <p>📏 {spell.range}</p>
+                      <p>
+                        ⏱{' '}
+                        {t.castingTime(
+                          spell.casting_time,
+                          spell.casting_time_uk,
+                        )}
+                      </p>
+                      <p>📏 {t.range(spell.range, spell.range_uk)}</p>
                     </div>
                     {spell.classes?.length > 0 && (
                       <p className="text-xs text-muted-foreground truncate">

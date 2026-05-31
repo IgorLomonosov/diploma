@@ -4,6 +4,7 @@ import Monster from '@/lib/db/models/Monster'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactMarkdown from 'react-markdown'
+import { t } from '@/lib/utils/translations'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -44,8 +45,8 @@ export default async function MonsterPage({ params }: Props) {
           </Badge>
         </div>
         <p className="text-muted-foreground mt-1">
-          {m.size_uk || m.size} {m.type_uk || m.type} ·{' '}
-          {m.alignment_uk || m.alignment}
+          {t.size(m.size)} {t.type(m.type, m.type_uk)} ·{' '}
+          {t.alignment(m.alignment, m.alignment_uk)}
         </p>
         {m.document_title && (
           <p className="text-sm text-muted-foreground mt-1">
