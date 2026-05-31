@@ -50,6 +50,8 @@ export interface IMonster extends Document {
   skills_uk: string
   senses_uk: string
   languages_uk: string
+  speed_uk: string
+  armor_desc_uk: string
   damage_resistances_uk: string
   damage_immunities_uk: string
   condition_immunities_uk: string
@@ -106,6 +108,8 @@ const MonsterSchema = new Schema<IMonster>(
     skills_uk: { type: String, default: '' },
     senses_uk: { type: String, default: '' },
     languages_uk: { type: String, default: '' },
+    speed_uk: { type: String, default: '' },
+    armor_desc_uk: { type: String, default: '' },
     damage_resistances_uk: { type: String, default: '' },
     damage_immunities_uk: { type: String, default: '' },
     condition_immunities_uk: { type: String, default: '' },

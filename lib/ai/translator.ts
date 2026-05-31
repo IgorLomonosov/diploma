@@ -101,6 +101,8 @@ export async function translateMonster(monster: {
   skills: string
   senses: string
   languages: string
+  speed: string
+  armor_desc: string
   damage_resistances: string
   damage_immunities: string
   condition_immunities: string
@@ -124,6 +126,8 @@ ${JSON.stringify({
   skills_uk: monster.skills,
   senses_uk: monster.senses,
   languages_uk: monster.languages,
+  speed_uk: monster.speed,
+  armor_desc_uk: monster.armor_desc,
   damage_resistances_uk: monster.damage_resistances,
   damage_immunities_uk: monster.damage_immunities,
   condition_immunities_uk: monster.condition_immunities,
