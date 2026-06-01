@@ -69,6 +69,77 @@ export interface Open5eSpell {
   document__title: string
 }
 
+export interface Open5eRace {
+  slug: string
+  name: string
+  size: string
+  speed: number | Record<string, number>
+  ability_score_increases: string
+  age: string
+  alignment: string
+  size_description: string
+  languages: string
+  vision: string
+  traits: string
+  subraces: { name: string; desc: string }[]
+  document__slug: string
+  document__title: string
+}
+
+export interface Open5eClass {
+  slug: string
+  name: string
+  hit_dice: string
+  hp_at_1st_level: string
+  hp_at_higher_levels: string
+  prof_armor: string
+  prof_weapons: string
+  prof_tools: string
+  prof_saving_throws: string
+  prof_skills: string
+  equipment: string
+  desc: string
+  spell_casting_ability: string
+  subtypes_name: string
+  document__slug: string
+  document__title: string
+}
+
+export interface Open5eBackground {
+  slug: string
+  name: string
+  desc: string
+  skill_proficiencies: string
+  tool_proficiencies: string
+  languages: string
+  equipment: string
+  feature: string
+  feature_desc: string
+  suggested_characteristics: string
+  document__slug: string
+  document__title: string
+}
+
+export interface Open5eFeat {
+  slug: string
+  name: string
+  desc: string
+  prerequisite: string
+  document__slug: string
+  document__title: string
+}
+
+export interface Open5eMagicItem {
+  slug: string
+  name: string
+  type: string
+  rarity: string
+  requires_attunement: string
+  desc: string
+  document__slug: string
+  document__title: string
+}
+
 export async function fetchMonsters(page = 1, limit = 20, document = '') {
   const params: Record<string, unknown> = { limit, page }
   if (document) params.document__slug = document
@@ -93,4 +164,39 @@ export async function fetchSpells(page = 1, limit = 20, document = '') {
 export async function fetchSpellBySlug(slug: string) {
   const res = await client.get(`/spells/${slug}/`)
   return res.data as Open5eSpell
+}
+
+export async function fetchRaces(page = 1, limit = 20, document = '') {
+  const params: Record<string, unknown> = { limit, page }
+  if (document) params.document__slug = document
+  const res = await client.get('/races/', { params })
+  return res.data
+}
+
+export async function fetchClasses(page = 1, limit = 20, document = '') {
+  const params: Record<string, unknown> = { limit, page }
+  if (document) params.document__slug = document
+  const res = await client.get('/classes/', { params })
+  return res.data
+}
+
+export async function fetchBackgrounds(page = 1, limit = 20, document = '') {
+  const params: Record<string, unknown> = { limit, page }
+  if (document) params.document__slug = document
+  const res = await client.get('/backgrounds/', { params })
+  return res.data
+}
+
+export async function fetchFeats(page = 1, limit = 20, document = '') {
+  const params: Record<string, unknown> = { limit, page }
+  if (document) params.document__slug = document
+  const res = await client.get('/feats/', { params })
+  return res.data
+}
+
+export async function fetchMagicItems(page = 1, limit = 20, document = '') {
+  const params: Record<string, unknown> = { limit, page }
+  if (document) params.document__slug = document
+  const res = await client.get('/magicitems/', { params })
+  return res.data
 }

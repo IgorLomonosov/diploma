@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { scrapeMonsters, scrapeSpells } from '@/lib/scrapers/scraper'
+import {
+  scrapeMonsters,
+  scrapeSpells,
+  scrapeRaces,
+  scrapeClasses,
+  scrapeBackgrounds,
+  scrapeFeats,
+  scrapeMagicItems,
+} from '@/lib/scrapers/scraper'
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,6 +32,40 @@ export async function POST(req: NextRequest) {
       const result = await scrapeSpells(maxPages || 5)
       return NextResponse.json({
         message: 'Скрапінг заклинань завершено',
+        result,
+      })
+    }
+
+    if (type === 'races') {
+      const result = await scrapeRaces(maxPages || 5, document || '')
+      return NextResponse.json({ message: 'Скрапінг рас завершено', result })
+    }
+
+    if (type === 'classes') {
+      const result = await scrapeClasses(maxPages || 5, document || '')
+      return NextResponse.json({ message: 'Скрапінг класів завершено', result })
+    }
+
+    if (type === 'backgrounds') {
+      const result = await scrapeBackgrounds(maxPages || 5, document || '')
+      return NextResponse.json({
+        message: 'Скрапінг передісторій завершено',
+        result,
+      })
+    }
+
+    if (type === 'feats') {
+      const result = await scrapeFeats(maxPages || 5, document || '')
+      return NextResponse.json({
+        message: 'Скрапінг здібностей завершено',
+        result,
+      })
+    }
+
+    if (type === 'magic-items') {
+      const result = await scrapeMagicItems(maxPages || 5, document || '')
+      return NextResponse.json({
+        message: 'Скрапінг магічних предметів завершено',
         result,
       })
     }

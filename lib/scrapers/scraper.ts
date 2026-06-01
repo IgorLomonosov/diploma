@@ -1,11 +1,26 @@
 import connectDB from '@/lib/db/mongoose'
 import Monster from '@/lib/db/models/Monster'
 import Spell from '@/lib/db/models/Spell'
+import Race from '@/lib/db/models/Race'
+import Class from '@/lib/db/models/Class'
+import Background from '@/lib/db/models/Background'
+import Feat from '@/lib/db/models/Feat'
+import MagicItem from '@/lib/db/models/MagicItem'
 import {
   fetchMonsters,
   fetchSpells,
   Open5eMonster,
   Open5eSpell,
+  fetchRaces,
+  fetchClasses,
+  fetchBackgrounds,
+  fetchFeats,
+  fetchMagicItems,
+  Open5eRace,
+  Open5eClass,
+  Open5eBackground,
+  Open5eFeat,
+  Open5eMagicItem,
 } from './open5e'
 
 export interface ScraperResult {
@@ -127,6 +142,135 @@ function transformSpell(raw: Open5eSpell) {
   }
 }
 
+function transformRace(raw: Open5eRace) {
+  const speedVal =
+    typeof raw.speed === 'object' && raw.speed !== null
+      ? (Object.values(raw.speed as Record<string, number>)[0] ?? 30)
+      : (raw.speed as number) || 30
+
+  return {
+    name_en: raw.name,
+    name_uk: '',
+    slug: raw.slug,
+    size: raw.size || '',
+    size_uk: '',
+    speed: speedVal,
+    ability_score_increases: raw.ability_score_increases || '',
+    age: raw.age || '',
+    age_uk: '',
+    alignment: raw.alignment || '',
+    alignment_uk: '',
+    size_description: raw.size_description || '',
+    size_description_uk: '',
+    languages: raw.languages || '',
+    languages_uk: '',
+    vision: raw.vision || '',
+    traits: typeof raw.traits === 'string' ? raw.traits : '',
+    traits_uk: '',
+    subraces: (raw.subraces || []).map((s) => ({
+      name: s.name,
+      name_uk: '',
+      desc: s.desc,
+      desc_uk: '',
+    })),
+    document_slug: raw.document__slug || '',
+    document_title: raw.document__title || '',
+    source: raw.document__slug || 'open5e',
+  }
+}
+
+function transformClass(raw: Open5eClass) {
+  return {
+    name_en: raw.name,
+    name_uk: '',
+    slug: raw.slug,
+    hit_dice: raw.hit_dice || '',
+    hp_at_1st_level: raw.hp_at_1st_level || '',
+    hp_at_1st_level_uk: '',
+    hp_at_higher_levels: raw.hp_at_higher_levels || '',
+    hp_at_higher_levels_uk: '',
+    prof_armor: raw.prof_armor || '',
+    prof_armor_uk: '',
+    prof_weapons: raw.prof_weapons || '',
+    prof_weapons_uk: '',
+    prof_tools: raw.prof_tools || '',
+    prof_tools_uk: '',
+    prof_saving_throws: raw.prof_saving_throws || '',
+    prof_saving_throws_uk: '',
+    prof_skills: raw.prof_skills || '',
+    prof_skills_uk: '',
+    equipment: raw.equipment || '',
+    equipment_uk: '',
+    desc: raw.desc || '',
+    desc_uk: '',
+    spell_casting_ability: raw.spell_casting_ability || '',
+    subtypes_name: raw.subtypes_name || '',
+    document_slug: raw.document__slug || '',
+    document_title: raw.document__title || '',
+    source: raw.document__slug || 'open5e',
+  }
+}
+
+function transformBackground(raw: Open5eBackground) {
+  return {
+    name_en: raw.name,
+    name_uk: '',
+    slug: raw.slug,
+    desc: raw.desc || '',
+    desc_uk: '',
+    skill_proficiencies: raw.skill_proficiencies || '',
+    skill_proficiencies_uk: '',
+    tool_proficiencies: raw.tool_proficiencies || '',
+    tool_proficiencies_uk: '',
+    languages: raw.languages || '',
+    languages_uk: '',
+    equipment: raw.equipment || '',
+    equipment_uk: '',
+    feature: raw.feature || '',
+    feature_uk: '',
+    feature_desc: raw.feature_desc || '',
+    feature_desc_uk: '',
+    suggested_characteristics: raw.suggested_characteristics || '',
+    suggested_characteristics_uk: '',
+    document_slug: raw.document__slug || '',
+    document_title: raw.document__title || '',
+    source: raw.document__slug || 'open5e',
+  }
+}
+
+function transformFeat(raw: Open5eFeat) {
+  return {
+    name_en: raw.name,
+    name_uk: '',
+    slug: raw.slug,
+    desc: raw.desc || '',
+    desc_uk: '',
+    prerequisite: raw.prerequisite || '',
+    prerequisite_uk: '',
+    document_slug: raw.document__slug || '',
+    document_title: raw.document__title || '',
+    source: raw.document__slug || 'open5e',
+  }
+}
+
+function transformMagicItem(raw: Open5eMagicItem) {
+  return {
+    name_en: raw.name,
+    name_uk: '',
+    slug: raw.slug,
+    type: raw.type || '',
+    type_uk: '',
+    rarity: raw.rarity || '',
+    rarity_uk: '',
+    requires_attunement: raw.requires_attunement || '',
+    desc: raw.desc || '',
+    desc_uk: '',
+    document_slug: raw.document__slug || '',
+    document_title: raw.document__title || '',
+    source: raw.document__slug || 'open5e',
+  }
+}
+
 // Скрапінг монстрів
 export async function scrapeMonsters(
   maxPages = 5,
@@ -228,5 +372,200 @@ export async function scrapeSpells(
     }
   }
 
+  return result
+}
+
+export async function scrapeRaces(
+  maxPages = 5,
+  document = '',
+): Promise<ScraperResult> {
+  await connectDB()
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
+
+  for (let page = 1; page <= maxPages; page++) {
+    try {
+      const data = await fetchRaces(page, 20, document)
+      if (!data.results || data.results.length === 0) break
+      result.total += data.results.length
+
+      for (const raw of data.results) {
+        try {
+          const race = transformRace(raw as Open5eRace)
+          await Race.findOneAndUpdate(
+            { slug: race.slug },
+            { $set: race },
+            { upsert: true, new: true },
+          )
+          result.success++
+        } catch (err) {
+          console.error(`Error saving race ${raw.slug}:`, err)
+          result.errors++
+        }
+      }
+
+      if (!data.next) break
+      await new Promise((r) => setTimeout(r, 500))
+    } catch (err) {
+      console.error(`Error fetching races page ${page}:`, err)
+      result.errors++
+      break
+    }
+  }
+  return result
+}
+
+export async function scrapeClasses(
+  maxPages = 5,
+  document = '',
+): Promise<ScraperResult> {
+  await connectDB()
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
+
+  for (let page = 1; page <= maxPages; page++) {
+    try {
+      const data = await fetchClasses(page, 20, document)
+      if (!data.results || data.results.length === 0) break
+      result.total += data.results.length
+
+      for (const raw of data.results) {
+        try {
+          const cls = transformClass(raw as Open5eClass)
+          await Class.findOneAndUpdate(
+            { slug: cls.slug },
+            { $set: cls },
+            { upsert: true, new: true },
+          )
+          result.success++
+        } catch (err) {
+          console.error(`Error saving class ${raw.slug}:`, err)
+          result.errors++
+        }
+      }
+
+      if (!data.next) break
+      await new Promise((r) => setTimeout(r, 500))
+    } catch (err) {
+      console.error(`Error fetching classes page ${page}:`, err)
+      result.errors++
+      break
+    }
+  }
+  return result
+}
+
+export async function scrapeBackgrounds(
+  maxPages = 5,
+  document = '',
+): Promise<ScraperResult> {
+  await connectDB()
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
+
+  for (let page = 1; page <= maxPages; page++) {
+    try {
+      const data = await fetchBackgrounds(page, 20, document)
+      if (!data.results || data.results.length === 0) break
+      result.total += data.results.length
+
+      for (const raw of data.results) {
+        try {
+          const bg = transformBackground(raw as Open5eBackground)
+          await Background.findOneAndUpdate(
+            { slug: bg.slug },
+            { $set: bg },
+            { upsert: true, new: true },
+          )
+          result.success++
+        } catch (err) {
+          console.error(`Error saving background ${raw.slug}:`, err)
+          result.errors++
+        }
+      }
+
+      if (!data.next) break
+      await new Promise((r) => setTimeout(r, 500))
+    } catch (err) {
+      console.error(`Error fetching backgrounds page ${page}:`, err)
+      result.errors++
+      break
+    }
+  }
+  return result
+}
+
+export async function scrapeFeats(
+  maxPages = 5,
+  document = '',
+): Promise<ScraperResult> {
+  await connectDB()
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
+
+  for (let page = 1; page <= maxPages; page++) {
+    try {
+      const data = await fetchFeats(page, 20, document)
+      if (!data.results || data.results.length === 0) break
+      result.total += data.results.length
+
+      for (const raw of data.results) {
+        try {
+          const feat = transformFeat(raw as Open5eFeat)
+          await Feat.findOneAndUpdate(
+            { slug: feat.slug },
+            { $set: feat },
+            { upsert: true, new: true },
+          )
+          result.success++
+        } catch (err) {
+          console.error(`Error saving feat ${raw.slug}:`, err)
+          result.errors++
+        }
+      }
+
+      if (!data.next) break
+      await new Promise((r) => setTimeout(r, 500))
+    } catch (err) {
+      console.error(`Error fetching feats page ${page}:`, err)
+      result.errors++
+      break
+    }
+  }
+  return result
+}
+
+export async function scrapeMagicItems(
+  maxPages = 5,
+  document = '',
+): Promise<ScraperResult> {
+  await connectDB()
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
+
+  for (let page = 1; page <= maxPages; page++) {
+    try {
+      const data = await fetchMagicItems(page, 20, document)
+      if (!data.results || data.results.length === 0) break
+      result.total += data.results.length
+
+      for (const raw of data.results) {
+        try {
+          const item = transformMagicItem(raw as Open5eMagicItem)
+          await MagicItem.findOneAndUpdate(
+            { slug: item.slug },
+            { $set: item },
+            { upsert: true, new: true },
+          )
+          result.success++
+        } catch (err) {
+          console.error(`Error saving magic item ${raw.slug}:`, err)
+          result.errors++
+        }
+      }
+
+      if (!data.next) break
+      await new Promise((r) => setTimeout(r, 500))
+    } catch (err) {
+      console.error(`Error fetching magic items page ${page}:`, err)
+      result.errors++
+      break
+    }
+  }
   return result
 }
