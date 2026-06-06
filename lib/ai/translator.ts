@@ -79,17 +79,30 @@ const GLOSSARY = `
 - Gargantuan → Жахливий
 `.trim()
 
-async function generateJSON(prompt: string): Promise<Record<string, unknown>> {
-  const result = await model.generateContent({
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.3,
-    },
-  })
-
-  const text = result.response.text()
-  const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
-  return JSON.parse(cleaned)
+async function generateJSON(
+  prompt: string,
+  retries = 3,
+): Promise<Record<string, unknown>> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.3 },
+      })
+      const text = result.response.text()
+      const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
+      return JSON.parse(cleaned)
+    } catch (err: any) {
+      const is503 = err?.status === 503 || err?.message?.includes('503')
+      if (is503 && attempt < retries) {
+        console.log(`Gemini 503, retry ${attempt}/${retries}...`)
+        await new Promise((r) => setTimeout(r, 5000 * attempt))
+        continue
+      }
+      throw err
+    }
+  }
+  throw new Error('Max retries exceeded')
 }
 
 export async function translateMonster(monster: {
@@ -178,6 +191,60 @@ ${JSON.stringify({
 
 Правила:
 - Переклади всі текстові поля
+- Зберігай ігрові механіки (DC, кидки кубиків, числа) без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+
+  return await generateJSON(prompt)
+}
+
+export async function translateRace(race: {
+  name_en: string
+  desc: string
+  asi_desc: string
+  age: string
+  alignment: string
+  size: string
+  speed_desc: string
+  languages: string
+  vision: string
+  traits: string
+  subraces: {
+    name: string
+    desc: string
+    asi_desc: string
+    traits: string
+  }[]
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: race.name_en,
+  desc_uk: race.desc,
+  asi_desc_uk: race.asi_desc,
+  age_uk: race.age,
+  alignment_uk: race.alignment,
+  size_uk: race.size,
+  speed_desc_uk: race.speed_desc,
+  languages_uk: race.languages,
+  vision_uk: race.vision,
+  traits_uk: race.traits,
+  subraces: race.subraces.map((s) => ({
+    name_uk: s.name,
+    desc_uk: s.desc,
+    asi_desc_uk: s.asi_desc,
+    traits_uk: s.traits,
+  })),
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай Markdown форматування (**жирний**, _курсив_)
 - Зберігай ігрові механіки (DC, кидки кубиків, числа) без змін
 - Повертай ТІЛЬКИ валідний JSON
 `

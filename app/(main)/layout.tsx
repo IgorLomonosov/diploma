@@ -34,6 +34,12 @@ export default async function MainLayout({
                 Заклинання
               </Link>
               <Link
+                href="/wiki/races"
+                className="text-sm hover:text-primary transition-colors"
+              >
+                Раси
+              </Link>
+              <Link
                 href="/character"
                 className="text-sm hover:text-primary transition-colors"
               >

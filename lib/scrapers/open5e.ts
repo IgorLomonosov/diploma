@@ -72,16 +72,25 @@ export interface Open5eSpell {
 export interface Open5eRace {
   slug: string
   name: string
-  size: string
-  speed: number | Record<string, number>
-  ability_score_increases: string
+  desc: string
+  asi_desc: string
+  asi: { attributes: string[]; value: number }[]
   age: string
   alignment: string
-  size_description: string
+  size: string
+  size_raw: string
+  speed: number | Record<string, number>
+  speed_desc: string
   languages: string
   vision: string
   traits: string
-  subraces: { name: string; desc: string }[]
+  subraces: {
+    name: string
+    slug: string
+    desc: string
+    asi_desc: string
+    traits: string
+  }[]
   document__slug: string
   document__title: string
 }

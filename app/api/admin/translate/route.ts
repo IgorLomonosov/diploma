@@ -3,7 +3,12 @@ import { auth } from '@/lib/auth'
 import connectDB from '@/lib/db/mongoose'
 import Monster from '@/lib/db/models/Monster'
 import Spell from '@/lib/db/models/Spell'
-import { translateMonster, translateSpell } from '@/lib/ai/translator'
+import {
+  translateMonster,
+  translateSpell,
+  translateRace,
+} from '@/lib/ai/translator'
+import Race from '@/lib/db/models/Race'
 
 export async function POST(req: NextRequest) {
   try {
@@ -124,6 +129,70 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         message: 'Переклад заклинань завершено',
         result: { success, errors, total: spells.length },
+      })
+    }
+
+    if (type === 'races') {
+      const races = await Race.find({ name_uk: '' }).limit(limit)
+      let success = 0
+      let errors = 0
+
+      for (const race of races) {
+        try {
+          const translated = await translateRace({
+            name_en: race.name_en,
+            desc: race.desc || '',
+            asi_desc: race.asi_desc || '',
+            age: race.age || '',
+            alignment: race.alignment || '',
+            size: race.size || '',
+            speed_desc: race.speed_desc || '',
+            languages: race.languages || '',
+            vision: race.vision || '',
+            traits: race.traits || '',
+            subraces: (race.subraces || []).map((s: any) => ({
+              name: s.name || '',
+              desc: s.desc || '',
+              asi_desc: s.asi_desc || '',
+              traits: s.traits || '',
+            })),
+          })
+
+          await Race.findByIdAndUpdate(race._id, {
+            $set: {
+              name_uk: translated.name_uk || '',
+              desc_uk: translated.desc_uk || '',
+              asi_desc_uk: translated.asi_desc_uk || '',
+              age_uk: translated.age_uk || '',
+              alignment_uk: translated.alignment_uk || '',
+              size_uk: translated.size_uk || '',
+              speed_desc_uk: translated.speed_desc_uk || '',
+              languages_uk: translated.languages_uk || '',
+              vision_uk: translated.vision_uk || '',
+              traits_uk: translated.traits_uk || '',
+              subraces: (race.subraces || []).map((s: any, i: number) => ({
+                ...s.toObject(),
+                name_uk: (translated.subraces as any[])?.[i]?.name_uk || '',
+                desc_uk: (translated.subraces as any[])?.[i]?.desc_uk || '',
+                asi_desc_uk:
+                  (translated.subraces as any[])?.[i]?.asi_desc_uk || '',
+                traits_uk: (translated.subraces as any[])?.[i]?.traits_uk || '',
+              })),
+            },
+          })
+
+          success++
+          console.log(`Translated race: ${race.name_en}`)
+          await new Promise((r) => setTimeout(r, 300))
+        } catch (err) {
+          console.error(`Error translating race ${race.name_en}:`, err)
+          errors++
+        }
+      }
+
+      return NextResponse.json({
+        message: 'Переклад рас завершено',
+        result: { success, errors, total: races.length },
       })
     }
 
