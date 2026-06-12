@@ -210,3 +210,60 @@ export async function fetchMagicItems(page = 1, limit = 20, document = '') {
   const res = await client.get('/magicitems/', { params })
   return res.data
 }
+
+export interface Open5eCondition {
+  slug: string
+  name: string
+  desc: string
+  document__slug: string
+  document__title: string
+}
+
+export async function fetchConditions(limit = 100, page = 1) {
+  const res = await client.get('/conditions/', { params: { limit, page } })
+  return res.data
+}
+
+export interface Open5eWeapon {
+  slug: string
+  name: string
+  desc: string
+  cost: string
+  weight: string
+  damage_dice: string
+  damage_type: string
+  properties: string[]
+  weapon_range: string
+  category_range: string
+  document__slug: string
+  document__title: string
+}
+
+export interface Open5eArmor {
+  slug: string
+  name: string
+  desc: string
+  cost: string
+  weight: string
+  ac_string: string
+  armor_category: string
+  strength_requirement: number
+  stealth_disadvantage: boolean
+  document__slug: string
+  document__title: string
+}
+
+export async function fetchWeapons(limit = 100, page = 1) {
+  const res = await client.get('/weapons/', { params: { limit, page } })
+  return res.data
+}
+
+export async function fetchArmor(limit = 100, page = 1) {
+  const res = await client.get('/armor/', { params: { limit, page } })
+  return res.data
+}
+
+export async function fetchSections(limit = 100, page = 1) {
+  const res = await client.get('/sections/', { params: { limit, page } })
+  return res.data
+}

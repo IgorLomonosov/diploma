@@ -8,6 +8,9 @@ import {
   scrapeBackgrounds,
   scrapeFeats,
   scrapeMagicItems,
+  scrapeConditions,
+  scrapeEquipment,
+  scrapeSections,
 } from '@/lib/scrapers/scraper'
 
 export async function POST(req: NextRequest) {
@@ -68,6 +71,24 @@ export async function POST(req: NextRequest) {
         message: 'Скрапінг магічних предметів завершено',
         result,
       })
+    }
+
+    if (type === 'conditions') {
+      const result = await scrapeConditions()
+      return NextResponse.json({ message: 'Скрапінг станів завершено', result })
+    }
+
+    if (type === 'equipment') {
+      const result = await scrapeEquipment()
+      return NextResponse.json({
+        message: 'Скрапінг спорядження завершено',
+        result,
+      })
+    }
+
+    if (type === 'sections') {
+      const result = await scrapeSections(5)
+      return NextResponse.json({ message: 'Скрапінг правил завершено', result })
     }
 
     return NextResponse.json({ error: 'Невідомий тип' }, { status: 400 })

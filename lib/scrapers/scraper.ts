@@ -6,6 +6,9 @@ import Class from '@/lib/db/models/Class'
 import Background from '@/lib/db/models/Background'
 import Feat from '@/lib/db/models/Feat'
 import MagicItem from '@/lib/db/models/MagicItem'
+import Condition from '@/lib/db/models/Condition'
+import Equipment from '@/lib/db/models/Equipment'
+import Section from '@/lib/db/models/Section'
 import {
   fetchMonsters,
   fetchSpells,
@@ -21,6 +24,10 @@ import {
   Open5eBackground,
   Open5eFeat,
   Open5eMagicItem,
+  fetchConditions,
+  fetchArmor,
+  fetchWeapons,
+  fetchSections,
 } from './open5e'
 
 export interface ScraperResult {
@@ -584,4 +591,122 @@ export async function scrapeMagicItems(
     }
   }
   return result
+}
+
+export async function scrapeConditions() {
+  await connectDB()
+  const data = await fetchConditions(100, 1)
+  const items = data.results || []
+  let upserted = 0
+
+  for (const raw of items) {
+    await Condition.findOneAndUpdate(
+      { slug: raw.slug },
+      {
+        slug: raw.slug,
+        name_en: raw.name,
+        name_uk: '',
+        desc_en: raw.desc || '',
+        desc_uk: '',
+        document_slug: raw.document__slug || '',
+        document_title: raw.document__title || '',
+      },
+      { upsert: true, new: true },
+    )
+    upserted++
+  }
+
+  return { upserted, total: items.length }
+}
+
+export async function scrapeEquipment() {
+  await connectDB()
+  let upserted = 0
+
+  // Зброя
+  const weaponsData = await fetchWeapons(100, 1)
+  for (const raw of weaponsData.results || []) {
+    await Equipment.findOneAndUpdate(
+      { slug: raw.slug },
+      {
+        slug: raw.slug,
+        name_en: raw.name,
+        name_uk: '',
+        category: 'weapon',
+        cost: raw.cost || '',
+        weight: raw.weight || '',
+        desc_en: raw.desc || '',
+        desc_uk: '',
+        damage_dice: raw.damage_dice || '',
+        damage_type: raw.damage_type || '',
+        properties: raw.properties || [],
+        weapon_range: raw.weapon_range || '',
+        document_slug: raw.document__slug || '',
+        document_title: raw.document__title || '',
+      },
+      { upsert: true, new: true },
+    )
+    upserted++
+  }
+
+  // Обладунки
+  const armorData = await fetchArmor(100, 1)
+  for (const raw of armorData.results || []) {
+    await Equipment.findOneAndUpdate(
+      { slug: `armor-${raw.slug}` },
+      {
+        slug: `armor-${raw.slug}`,
+        name_en: raw.name,
+        name_uk: '',
+        category: 'armor',
+        cost: raw.cost || '',
+        weight: raw.weight || '',
+        desc_en: raw.desc || '',
+        desc_uk: '',
+        armor_class: raw.ac_string || '',
+        armor_category: raw.armor_category || '',
+        strength_requirement: raw.strength_requirement || 0,
+        stealth_disadvantage: raw.stealth_disadvantage || false,
+        document_slug: raw.document__slug || '',
+        document_title: raw.document__title || '',
+      },
+      { upsert: true, new: true },
+    )
+    upserted++
+  }
+
+  return { upserted }
+}
+
+export async function scrapeSections(maxPages = 5) {
+  await connectDB()
+  let upserted = 0
+
+  for (let page = 1; page <= maxPages; page++) {
+    const data = await fetchSections(100, page)
+    const results = data.results || []
+    if (!results.length) break
+
+    for (const raw of results) {
+      await Section.findOneAndUpdate(
+        { slug: raw.slug },
+        {
+          slug: raw.slug,
+          name_en: raw.name,
+          name_uk: '',
+          desc_en: raw.desc || '',
+          desc_uk: '',
+          parent: raw.parent || '',
+          document_slug: raw.document__slug || '',
+          document_title: raw.document__title || '',
+        },
+        { upsert: true, new: true },
+      )
+      upserted++
+    }
+
+    if (!data.next) break
+  }
+
+  return { upserted }
 }

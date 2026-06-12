@@ -12,6 +12,9 @@ const WIKI_LINKS = [
   { href: '/wiki/backgrounds', icon: '📜', label: 'Передісторії' },
   { href: '/wiki/magic-items', icon: '💎', label: 'Предмети' },
   { href: '/wiki/feats', icon: '🌟', label: 'Здібності' },
+  { href: '/wiki/conditions', icon: '⚠️', label: 'Стани' },
+  { href: '/wiki/equipment', icon: '⚔️', label: 'Спорядження' },
+  { href: '/wiki/sections', icon: '📖', label: 'Правила' },
 ]
 
 const TOOL_LINKS = [

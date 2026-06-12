@@ -45,6 +45,9 @@ const SCRAPE_TYPES = [
   { type: 'backgrounds', label: 'Передісторії', maxPages: 5 },
   { type: 'feats', label: 'Здібності', maxPages: 10 },
   { type: 'magic-items', label: 'Магічні предмети', maxPages: 20 },
+  { type: 'conditions', label: 'Стани', maxPages: 1 },
+  { type: 'equipment', label: 'Спорядження', maxPages: 1 },
+  { type: 'sections', label: 'Правила', maxPages: 5 },
 ]
 
 const TRANSLATE_TYPES = [

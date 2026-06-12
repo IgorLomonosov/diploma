@@ -43,6 +43,24 @@ const WIKI_LINKS = [
     label: 'Здібності',
     desc: 'Особливі вміння',
   },
+  {
+    href: '/wiki/conditions',
+    icon: '⚠️',
+    label: 'Стани',
+    desc: 'Ігрові стани',
+  },
+  {
+    href: '/wiki/equipment',
+    icon: '⚔️',
+    label: 'Спорядження',
+    desc: 'Зброя та обладунки',
+  },
+  {
+    href: '/wiki/sections',
+    icon: '📖',
+    label: 'Правила',
+    desc: 'Правила гри',
+  },
 ]
 
 const TOOL_LINKS = [
