@@ -113,6 +113,7 @@ const MonsterSchema = new Schema<IMonster>(
     damage_resistances_uk: { type: String, default: '' },
     damage_immunities_uk: { type: String, default: '' },
     condition_immunities_uk: { type: String, default: '' },
+    img_main: { type: String, default: '' },
   },
   { timestamps: true },
 )

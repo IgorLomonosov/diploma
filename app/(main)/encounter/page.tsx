@@ -230,7 +230,7 @@ export default function EncounterPage() {
     <div className="max-w-5xl mx-auto space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white">Encounter Builder</h1>
+          <h1 className="text-3xl font-bold text-white">Симуляція Бою</h1>
           {started && <p className="text-slate-400 mt-1">Раунд {round}</p>}
         </div>
         <div className="flex gap-2">

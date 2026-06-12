@@ -3,6 +3,7 @@ import connectDB from '@/lib/db/mongoose'
 import Monster from '@/lib/db/models/Monster'
 import ReactMarkdown from 'react-markdown'
 import { t } from '@/lib/utils/translations'
+import MonsterImage from '../MonsterImage'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -36,18 +37,27 @@ export default async function MonsterPage({ params }: Props) {
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Шапка */}
       <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-3xl font-bold text-white">
-            {m.name_uk || m.name_en}
-          </h1>
-          {m.name_uk && <p className="text-slate-400">{m.name_en}</p>}
-          <p className="text-slate-400 mt-1">
-            {t.size(m.size)} {t.type(m.type, m.type_uk)} ·{' '}
-            {t.alignment(m.alignment, m.alignment_uk)}
-          </p>
-          {m.document_title && (
-            <p className="text-xs text-slate-600 mt-1">{m.document_title}</p>
+        <div className="flex gap-5 flex-wrap">
+          {m.img_main && (
+            <MonsterImage
+              src={m.img_main}
+              alt={m.name_uk || m.name_en}
+              className="w-64 h-64 object-contain rounded-xl border border-slate-700 bg-slate-800/50 p-2 shrink-0"
+            />
           )}
+          <div>
+            <h1 className="text-3xl font-bold text-white">
+              {m.name_uk || m.name_en}
+            </h1>
+            {m.name_uk && <p className="text-slate-400">{m.name_en}</p>}
+            <p className="text-slate-400 mt-1">
+              {t.size(m.size)} {t.type(m.type, m.type_uk)} ·{' '}
+              {t.alignment(m.alignment, m.alignment_uk)}
+            </p>
+            {m.document_title && (
+              <p className="text-xs text-slate-600 mt-1">{m.document_title}</p>
+            )}
+          </div>
         </div>
         <span className="px-3 py-1 rounded-full border border-red-800 bg-red-900/30 text-red-300 font-semibold text-sm">
           CR {m.challenge_rating}

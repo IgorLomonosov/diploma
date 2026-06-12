@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       .skip(skip)
       .limit(limit)
       .select(
-        'slug name_en name_uk size type type_uk alignment challenge_rating hit_points armor_class document_title',
+        'slug name_en name_uk size type type_uk alignment challenge_rating hit_points armor_class document_title img_main',
       )
       .sort({ name_en: 1 })
 

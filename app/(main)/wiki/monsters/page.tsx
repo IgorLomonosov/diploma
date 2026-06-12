@@ -19,6 +19,7 @@ interface Monster {
   hit_points: number
   armor_class: number
   document_title: string
+  img_main: string
 }
 
 const CR_OPTIONS = [
@@ -159,15 +160,27 @@ export default function MonstersPage() {
             {monsters.map((monster) => (
               <Link key={monster._id} href={`/wiki/monsters/${monster.slug}`}>
                 <div className="group p-4 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800/80 hover:border-red-800 transition-all cursor-pointer h-full">
-                  <div className="mb-2">
-                    <p className="font-semibold text-white group-hover:text-red-400 transition-colors">
-                      {monster.name_uk || monster.name_en}
-                    </p>
-                    {monster.name_uk && (
-                      <p className="text-sm text-slate-500">
-                        {monster.name_en}
-                      </p>
+                  <div className="flex gap-3 mb-2">
+                    {monster.img_main && (
+                      <img
+                        src={monster.img_main}
+                        alt={monster.name_uk || monster.name_en}
+                        className="w-14 h-14 object-contain rounded-lg border border-slate-700 bg-slate-800/50 p-0.5 shrink-0"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
                     )}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-white group-hover:text-red-400 transition-colors">
+                        {monster.name_uk || monster.name_en}
+                      </p>
+                      {monster.name_uk && (
+                        <p className="text-sm text-slate-500">
+                          {monster.name_en}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-1 mb-2">
                     <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">

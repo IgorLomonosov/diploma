@@ -19,7 +19,7 @@ const WIKI_LINKS = [
 
 const TOOL_LINKS = [
   { href: '/character', label: 'Персонажі' },
-  { href: '/encounter', label: 'Encounter' },
+  { href: '/encounter', label: 'Симуляція Бою' },
   { href: '/dice', label: 'Дайси' },
   { href: '/chat', label: 'AI Асистент' },
 ]

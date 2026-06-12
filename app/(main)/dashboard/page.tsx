@@ -70,7 +70,7 @@ const TOOL_LINKS = [
   {
     href: '/encounter',
     icon: '🗡️',
-    label: 'Encounter Builder',
+    label: 'Симуляція Бою',
     desc: 'Управління боєм',
   },
   { href: '/dice', icon: '🎲', label: 'Дайси', desc: 'Кидки кубиків' },
