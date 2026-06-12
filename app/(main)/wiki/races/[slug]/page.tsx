@@ -1,19 +1,20 @@
 import { notFound } from 'next/navigation'
 import connectDB from '@/lib/db/mongoose'
 import Race from '@/lib/db/models/Race'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactMarkdown from 'react-markdown'
-import { t } from '@/lib/utils/translations'
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
+const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
+const sectionTitle = 'text-base font-semibold text-white mb-3'
 const mdComponents = {
-  p: ({ children }: any) => <p className="mb-3 last:mb-0">{children}</p>,
+  p: ({ children }: any) => (
+    <p className="mb-3 last:mb-0 text-slate-300">{children}</p>
+  ),
   strong: ({ children }: any) => (
-    <strong className="font-semibold">{children}</strong>
+    <strong className="font-semibold text-white">{children}</strong>
   ),
 }
 
@@ -25,147 +26,82 @@ export default async function RacePage({ params }: Props) {
   const r = race as any
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-5">
       <div>
-        <h1 className="text-3xl font-bold">{r.name_uk || r.name_en}</h1>
-        {r.name_uk && <p className="text-muted-foreground">{r.name_en}</p>}
+        <h1 className="text-3xl font-bold text-white">
+          {r.name_uk || r.name_en}
+        </h1>
+        {r.name_uk && <p className="text-slate-400">{r.name_en}</p>}
         {r.document_title && (
-          <p className="text-sm text-muted-foreground mt-1">
-            📖 {r.document_title}
-          </p>
+          <p className="text-xs text-slate-600 mt-1">{r.document_title}</p>
         )}
       </div>
 
-      <Card>
-        <CardContent className="pt-4 space-y-2 text-sm">
+      <div className={cardClass}>
+        <div className="space-y-2 text-sm">
           <div>
-            <span className="font-medium">Швидкість: </span>
-            {r.speed} фут.
+            <span className="text-slate-500">Швидкість: </span>
+            <span className="text-slate-300">{r.speed} фут.</span>
           </div>
           {(r.asi_desc_uk || r.asi_desc) && (
-            <div>
+            <div className="text-slate-300">
               <ReactMarkdown components={mdComponents}>
                 {r.asi_desc_uk || r.asi_desc}
               </ReactMarkdown>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {(r.size_uk || r.size) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Розмір</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed">
-            <ReactMarkdown components={mdComponents}>
-              {r.size_uk || r.size}
-            </ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
-
-      {(r.languages_uk || r.languages) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Мови</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed">
-            <ReactMarkdown components={mdComponents}>
-              {r.languages_uk || r.languages}
-            </ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
-
-      {(r.vision_uk || r.vision) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Зір</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed">
-            <ReactMarkdown components={mdComponents}>
-              {r.vision_uk || r.vision}
-            </ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
-
-      {(r.age_uk || r.age) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Вік</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            <ReactMarkdown components={mdComponents}>
-              {r.age_uk || r.age}
-            </ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
-
-      {(r.alignment_uk || r.alignment) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Мировозрення</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            <ReactMarkdown components={mdComponents}>
-              {r.alignment_uk || r.alignment}
-            </ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
-
-      {(r.traits_uk || r.traits) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Расові риси</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed">
-            <ReactMarkdown components={mdComponents}>
-              {r.traits_uk || r.traits}
-            </ReactMarkdown>
-          </CardContent>
-        </Card>
-      )}
+      {[
+        { title: 'Розмір', en: r.size, uk: r.size_uk },
+        { title: 'Мови', en: r.languages, uk: r.languages_uk },
+        { title: 'Зір', en: r.vision, uk: r.vision_uk },
+        { title: 'Вік', en: r.age, uk: r.age_uk },
+        { title: 'Мировозрення', en: r.alignment, uk: r.alignment_uk },
+        { title: 'Расові риси', en: r.traits, uk: r.traits_uk },
+      ]
+        .filter((s) => s.en || s.uk)
+        .map((section) => (
+          <div key={section.title} className={cardClass}>
+            <h2 className={sectionTitle}>{section.title}</h2>
+            <div className="text-sm leading-relaxed">
+              <ReactMarkdown components={mdComponents}>
+                {section.uk || section.en}
+              </ReactMarkdown>
+            </div>
+          </div>
+        ))}
 
       {r.subraces?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Підраси</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Підраси</h2>
+          <div className="space-y-6">
             {r.subraces.map((sub: any, i: number) => (
-              <div key={i} className="space-y-2">
-                <h3 className="font-semibold text-base">
+              <div
+                key={i}
+                className="border-t border-slate-700 pt-4 first:border-0 first:pt-0"
+              >
+                <h3 className="font-semibold text-white mb-2">
                   {sub.name_uk || sub.name}
                 </h3>
-                {(sub.desc_uk || sub.desc) && (
-                  <div className="text-sm leading-relaxed">
-                    <ReactMarkdown components={mdComponents}>
-                      {sub.desc_uk || sub.desc}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                {(sub.asi_desc_uk || sub.asi_desc) && (
-                  <div className="text-sm">
-                    <ReactMarkdown components={mdComponents}>
-                      {sub.asi_desc_uk || sub.asi_desc}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                {(sub.traits_uk || sub.traits) && (
-                  <div className="text-sm leading-relaxed">
-                    <ReactMarkdown components={mdComponents}>
-                      {sub.traits_uk || sub.traits}
-                    </ReactMarkdown>
-                  </div>
-                )}
+                {[
+                  sub.desc_uk || sub.desc,
+                  sub.asi_desc_uk || sub.asi_desc,
+                  sub.traits_uk || sub.traits,
+                ]
+                  .filter(Boolean)
+                  .map((text, j) => (
+                    <div key={j} className="text-sm mb-2">
+                      <ReactMarkdown components={mdComponents}>
+                        {text}
+                      </ReactMarkdown>
+                    </div>
+                  ))}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )

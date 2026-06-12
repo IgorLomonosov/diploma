@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { auth } from '@/lib/auth'
-import { Card, CardContent } from '@/components/ui/card'
 import connectDB from '@/lib/db/mongoose'
 import Monster from '@/lib/db/models/Monster'
 import Spell from '@/lib/db/models/Spell'
@@ -9,6 +8,9 @@ import Class from '@/lib/db/models/Class'
 import Background from '@/lib/db/models/Background'
 import Feat from '@/lib/db/models/Feat'
 import MagicItem from '@/lib/db/models/MagicItem'
+import Condition from '@/lib/db/models/Condition'
+import Equipment from '@/lib/db/models/Equipment'
+import Section from '@/lib/db/models/Section'
 
 const WIKI_LINKS = [
   {
@@ -51,16 +53,11 @@ const WIKI_LINKS = [
   },
   {
     href: '/wiki/equipment',
-    icon: '⚔️',
+    icon: '🛡️',
     label: 'Спорядження',
     desc: 'Зброя та обладунки',
   },
-  {
-    href: '/wiki/sections',
-    icon: '📖',
-    label: 'Правила',
-    desc: 'Правила гри',
-  },
+  { href: '/wiki/sections', icon: '📖', label: 'Правила', desc: 'Правила гри' },
 ]
 
 const TOOL_LINKS = [
@@ -87,40 +84,67 @@ const TOOL_LINKS = [
 
 export default async function DashboardPage() {
   const session = await auth()
-
   await connectDB()
-  const [monsters, spells, races, classes, backgrounds, feats, items] =
-    await Promise.all([
-      Monster.countDocuments(),
-      Spell.countDocuments(),
-      Race.countDocuments(),
-      Class.countDocuments(),
-      Background.countDocuments(),
-      Feat.countDocuments(),
-      MagicItem.countDocuments(),
-    ])
+
+  const [
+    monsters,
+    spells,
+    races,
+    classes,
+    backgrounds,
+    feats,
+    items,
+    conditions,
+    equipment,
+    sections,
+  ] = await Promise.all([
+    Monster.countDocuments(),
+    Spell.countDocuments(),
+    Race.countDocuments(),
+    Class.countDocuments(),
+    Background.countDocuments(),
+    Feat.countDocuments(),
+    MagicItem.countDocuments(),
+    Condition.countDocuments(),
+    Equipment.countDocuments(),
+    Section.countDocuments(),
+  ])
 
   const total =
-    monsters + spells + races + classes + backgrounds + feats + items
+    monsters +
+    spells +
+    races +
+    classes +
+    backgrounds +
+    feats +
+    items +
+    conditions +
+    equipment +
+    sections
 
   const stats = [
-    { label: 'Монстри', count: monsters, icon: '👹' },
-    { label: 'Заклинання', count: spells, icon: '✨' },
-    { label: 'Раси', count: races, icon: '🧝' },
-    { label: 'Класи', count: classes, icon: '⚔️' },
-    { label: 'Передісторії', count: backgrounds, icon: '📜' },
-    { label: 'Здібності', count: feats, icon: '🌟' },
-    { label: 'Предмети', count: items, icon: '💎' },
+    { label: 'Монстри', count: monsters },
+    { label: 'Заклинання', count: spells },
+    { label: 'Раси', count: races },
+    { label: 'Класи', count: classes },
+    { label: 'Передісторії', count: backgrounds },
+    { label: 'Здібності', count: feats },
+    { label: 'Предмети', count: items },
+    { label: 'Стани', count: conditions },
+    { label: 'Спорядження', count: equipment },
+    { label: 'Правила', count: sections },
   ]
 
   return (
     <div className="space-y-10">
       {/* Банер */}
-      <div className="relative rounded-2xl overflow-hidden bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 p-8 text-white">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-red-500 via-transparent to-transparent" />
+      <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900/60 p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent" />
         <div className="relative">
           <p className="text-slate-400 text-sm mb-1">Вітаємо у</p>
-          <h1 className="text-4xl font-bold mb-2">Гримуарі Дракона 🐉</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">
+            Гримуарі Дракона 🐉
+          </h1>
           <p className="text-slate-300">
             Привіт,{' '}
             <span className="text-white font-semibold">
@@ -137,46 +161,39 @@ export default async function DashboardPage() {
 
       {/* Статистика */}
       <div>
-        <h2 className="text-lg font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
+        <h2 className="text-xs font-semibold mb-3 text-slate-500 uppercase tracking-widest">
           База знань
         </h2>
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+        <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
           {stats.map((s) => (
-            <Card
+            <div
               key={s.label}
-              className="text-center hover:shadow-md transition-shadow"
+              className="text-center p-3 rounded-lg border border-slate-700 bg-slate-900/50"
             >
-              <CardContent className="pt-4 pb-4">
-                <div className="text-2xl mb-1">{s.icon}</div>
-                <div className="text-xl font-bold">
-                  {s.count.toLocaleString()}
-                </div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {s.label}
-                </div>
-              </CardContent>
-            </Card>
+              <div className="text-xl font-bold text-white">
+                {s.count.toLocaleString()}
+              </div>
+              <div className="text-xs text-slate-500 mt-0.5">{s.label}</div>
+            </div>
           ))}
         </div>
       </div>
 
       {/* Wiki */}
       <div>
-        <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
-          📚 Вікі
+        <h2 className="text-xs font-semibold mb-3 text-slate-500 uppercase tracking-widest">
+          Вікі
         </h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {WIKI_LINKS.map((link) => (
             <Link key={link.href} href={link.href}>
-              <Card className="hover:shadow-md hover:border-primary/50 transition-all cursor-pointer h-full">
-                <CardContent className="pt-4 pb-4 text-center">
-                  <div className="text-3xl mb-2">{link.icon}</div>
-                  <div className="font-medium text-sm">{link.label}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {link.desc}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="group p-4 rounded-xl border border-slate-700 bg-slate-900/50 hover:bg-slate-800/80 hover:border-red-800 transition-all cursor-pointer text-center h-full">
+                <div className="text-2xl mb-2">{link.icon}</div>
+                <div className="font-medium text-sm text-white">
+                  {link.label}
+                </div>
+                <div className="text-xs text-slate-500 mt-1">{link.desc}</div>
+              </div>
             </Link>
           ))}
         </div>
@@ -184,21 +201,17 @@ export default async function DashboardPage() {
 
       {/* Інструменти */}
       <div>
-        <h2 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wide">
-          🛠️ Інструменти
+        <h2 className="text-xs font-semibold mb-3 text-slate-500 uppercase tracking-widest">
+          Інструменти
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {TOOL_LINKS.map((link) => (
             <Link key={link.href} href={link.href}>
-              <Card className="hover:shadow-md hover:border-primary/50 transition-all cursor-pointer h-full">
-                <CardContent className="pt-5 pb-5 text-center">
-                  <div className="text-3xl mb-2">{link.icon}</div>
-                  <div className="font-medium">{link.label}</div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {link.desc}
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="group p-5 rounded-xl border border-slate-700 bg-slate-900/50 hover:bg-slate-800/80 hover:border-red-800 transition-all cursor-pointer text-center h-full">
+                <div className="text-3xl mb-2">{link.icon}</div>
+                <div className="font-medium text-white">{link.label}</div>
+                <div className="text-xs text-slate-500 mt-1">{link.desc}</div>
+              </div>
             </Link>
           ))}
         </div>

@@ -1,20 +1,23 @@
 import { notFound } from 'next/navigation'
 import connectDB from '@/lib/db/mongoose'
 import Class from '@/lib/db/models/Class'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactMarkdown from 'react-markdown'
 
 interface Props {
   params: Promise<{ slug: string }>
 }
 
+const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
+const sectionTitle = 'text-base font-semibold text-white mb-3'
 const mdComponents = {
-  p: ({ children }: any) => <p className="mb-3 last:mb-0">{children}</p>,
+  p: ({ children }: any) => (
+    <p className="mb-3 last:mb-0 text-slate-300">{children}</p>
+  ),
   strong: ({ children }: any) => (
-    <strong className="font-semibold">{children}</strong>
+    <strong className="font-semibold text-white">{children}</strong>
   ),
   ul: ({ children }: any) => (
-    <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>
+    <ul className="list-disc pl-5 mb-3 space-y-1 text-slate-300">{children}</ul>
   ),
   li: ({ children }: any) => <li>{children}</li>,
 }
@@ -27,93 +30,89 @@ export default async function ClassPage({ params }: Props) {
   const c = cls as any
 
   const proficiencies = [
-    { label: 'Обладунки', en: c.prof_armor, uk: c.prof_armor_uk },
-    { label: 'Зброя', en: c.prof_weapons, uk: c.prof_weapons_uk },
-    { label: 'Інструменти', en: c.prof_tools, uk: c.prof_tools_uk },
+    { label: 'Обладунки', value: c.prof_armor_uk || c.prof_armor },
+    { label: 'Зброя', value: c.prof_weapons_uk || c.prof_weapons },
+    { label: 'Інструменти', value: c.prof_tools_uk || c.prof_tools },
     {
       label: 'Рятівні кидки',
-      en: c.prof_saving_throws,
-      uk: c.prof_saving_throws_uk,
+      value: c.prof_saving_throws_uk || c.prof_saving_throws,
     },
-    { label: 'Навички', en: c.prof_skills, uk: c.prof_skills_uk },
-  ]
+    { label: 'Навички', value: c.prof_skills_uk || c.prof_skills },
+  ].filter((p) => p.value)
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-5">
       <div>
-        <h1 className="text-3xl font-bold">{c.name_uk || c.name_en}</h1>
-        {c.name_uk && <p className="text-muted-foreground">{c.name_en}</p>}
+        <h1 className="text-3xl font-bold text-white">
+          {c.name_uk || c.name_en}
+        </h1>
+        {c.name_uk && <p className="text-slate-400">{c.name_en}</p>}
         {c.document_title && (
-          <p className="text-sm text-muted-foreground mt-1">
-            📖 {c.document_title}
-          </p>
+          <p className="text-xs text-slate-600 mt-1">{c.document_title}</p>
         )}
       </div>
 
-      <Card>
-        <CardContent className="pt-4 grid grid-cols-2 gap-3 text-sm">
+      <div className={cardClass}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
           {c.hit_dice && (
             <div>
-              <span className="font-medium">Кістки ПЗ: </span>
-              {c.hit_dice}
+              <span className="text-slate-500">Кістки ПЗ: </span>
+              <span className="text-slate-300">{c.hit_dice}</span>
             </div>
           )}
           {(c.hp_at_1st_level_uk || c.hp_at_1st_level) && (
-            <div className="col-span-2">
-              <span className="font-medium">ПЗ на 1 рівні: </span>
-              {c.hp_at_1st_level_uk || c.hp_at_1st_level}
+            <div className="sm:col-span-2">
+              <span className="text-slate-500">ПЗ на 1 рівні: </span>
+              <span className="text-slate-300">
+                {c.hp_at_1st_level_uk || c.hp_at_1st_level}
+              </span>
             </div>
           )}
           {(c.hp_at_higher_levels_uk || c.hp_at_higher_levels) && (
-            <div className="col-span-2">
-              <span className="font-medium">ПЗ на вищих рівнях: </span>
-              {c.hp_at_higher_levels_uk || c.hp_at_higher_levels}
+            <div className="sm:col-span-2">
+              <span className="text-slate-500">ПЗ на вищих рівнях: </span>
+              <span className="text-slate-300">
+                {c.hp_at_higher_levels_uk || c.hp_at_higher_levels}
+              </span>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Володіння</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
-          {proficiencies.map(
-            (p) =>
-              (p.en || p.uk) && (
-                <div key={p.label}>
-                  <span className="font-medium">{p.label}: </span>
-                  {p.uk || p.en}
-                </div>
-              ),
-          )}
-        </CardContent>
-      </Card>
+      {proficiencies.length > 0 && (
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Володіння</h2>
+          <div className="space-y-2 text-sm">
+            {proficiencies.map((p) => (
+              <div key={p.label}>
+                <span className="text-slate-500">{p.label}: </span>
+                <span className="text-slate-300">{p.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {(c.equipment_uk || c.equipment) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Спорядження</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Спорядження</h2>
+          <div className="text-sm leading-relaxed">
             <ReactMarkdown components={mdComponents}>
               {c.equipment_uk || c.equipment}
             </ReactMarkdown>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       {(c.desc_uk || c.desc) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Опис</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Опис</h2>
+          <div className="text-sm leading-relaxed">
             <ReactMarkdown components={mdComponents}>
               {c.desc_uk || c.desc}
             </ReactMarkdown>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )

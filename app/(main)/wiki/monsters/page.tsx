@@ -4,9 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { t } from '@/lib/utils/translations'
-import { Button } from '@/components/ui/button'
 
 interface Monster {
   _id: string
@@ -21,12 +19,6 @@ interface Monster {
   hit_points: number
   armor_class: number
   document_title: string
-}
-
-interface Pagination {
-  page: number
-  pages: number
-  total: number
 }
 
 const CR_OPTIONS = [
@@ -55,12 +47,23 @@ const CR_OPTIONS = [
   '19',
   '20',
 ]
-
-const SIZE_OPTIONS = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan']
+const SIZE_OPTIONS = [
+  { value: 'Tiny', label: 'Крихітний' },
+  { value: 'Small', label: 'Малий' },
+  { value: 'Medium', label: 'Середній' },
+  { value: 'Large', label: 'Великий' },
+  { value: 'Huge', label: 'Величезний' },
+  { value: 'Gargantuan', label: 'Жахливий' },
+]
+const selectClass =
+  'h-9 rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-3 text-sm'
 
 export default function MonstersPage() {
   const [monsters, setMonsters] = useState<Monster[]>([])
-  const [pagination, setPagination] = useState<Pagination | null>(null)
+  const [pagination, setPagination] = useState<{
+    pages: number
+    total: number
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [cr, setCr] = useState('')
@@ -70,13 +73,10 @@ export default function MonstersPage() {
   const fetchMonsters = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      params.set('page', String(page))
-      params.set('limit', '21')
+      const params = new URLSearchParams({ page: String(page), limit: '21' })
       if (search) params.set('search', search)
       if (cr && cr !== 'all') params.set('cr', cr)
       if (size && size !== 'all') params.set('size', size)
-
       const res = await fetch(`/api/monsters?${params}`)
       const data = await res.json()
       setMonsters(data.data)
@@ -93,25 +93,11 @@ export default function MonstersPage() {
     return () => clearTimeout(timeout)
   }, [fetchMonsters])
 
-  const handleSearch = (value: string) => {
-    setSearch(value)
-    setPage(1)
-  }
-
-  const handleFilter = (type: 'cr' | 'size', value: string) => {
-    if (type === 'cr') setCr(value)
-    if (type === 'size') setSize(value)
-    setPage(1)
-  }
-
-  const capitalize = (str: string) =>
-    str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Бестіарій</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-3xl font-bold text-white">Бестіарій</h1>
+        <p className="text-slate-400 mt-1">
           {pagination?.total ?? '...'} монстрів у базі
         </p>
       </div>
@@ -120,12 +106,19 @@ export default function MonstersPage() {
         <Input
           placeholder="Пошук монстра..."
           value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="sm:max-w-xs"
+          onChange={(e) => {
+            setSearch(e.target.value)
+            setPage(1)
+          }}
+          className="sm:max-w-xs bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
         />
         <select
-          onChange={(e) => handleFilter('cr', e.target.value)}
-          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm sm:w-40"
+          value={cr}
+          onChange={(e) => {
+            setCr(e.target.value)
+            setPage(1)
+          }}
+          className={selectClass}
         >
           <option value="all">Всі CR</option>
           {CR_OPTIONS.map((c) => (
@@ -135,13 +128,17 @@ export default function MonstersPage() {
           ))}
         </select>
         <select
-          onChange={(e) => handleFilter('size', e.target.value)}
-          className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm sm:w-40"
+          value={size}
+          onChange={(e) => {
+            setSize(e.target.value)
+            setPage(1)
+          }}
+          className={selectClass}
         >
           <option value="all">Всі розміри</option>
           {SIZE_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
+            <option key={s.value} value={s.value}>
+              {s.label}
             </option>
           ))}
         </select>
@@ -150,7 +147,10 @@ export default function MonstersPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-36 rounded-lg bg-muted animate-pulse" />
+            <div
+              key={i}
+              className="h-36 rounded-xl bg-slate-800/50 animate-pulse"
+            />
           ))}
         </div>
       ) : (
@@ -158,63 +158,63 @@ export default function MonstersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {monsters.map((monster) => (
               <Link key={monster._id} href={`/wiki/monsters/${monster.slug}`}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">
+                <div className="group p-4 rounded-xl border border-slate-700 bg-slate-900/60 hover:bg-slate-800/80 hover:border-red-800 transition-all cursor-pointer h-full">
+                  <div className="mb-2">
+                    <p className="font-semibold text-white group-hover:text-red-400 transition-colors">
                       {monster.name_uk || monster.name_en}
-                    </CardTitle>
+                    </p>
                     {monster.name_uk && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-slate-500">
                         {monster.name_en}
                       </p>
                     )}
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex flex-wrap gap-1">
-                      <Badge variant="secondary">{t.size(monster.size)}</Badge>
-                      <Badge variant="secondary">
-                        {t.type(monster.type, monster.type_uk)}
-                      </Badge>
-                      <Badge>CR {monster.challenge_rating}</Badge>
-                    </div>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                      <span>ПЗ: {monster.hit_points}</span>
-                      <span>КО: {monster.armor_class}</span>
-                    </div>
-                    {monster.document_title && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        📖 {monster.document_title}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                      {t.size(monster.size)}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                      {t.type(monster.type, monster.type_uk)}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/60 text-red-300 font-medium">
+                      CR {monster.challenge_rating}
+                    </span>
+                  </div>
+                  <div className="flex gap-4 text-sm text-slate-400">
+                    <span>ПЗ: {monster.hit_points}</span>
+                    <span>КО: {monster.armor_class}</span>
+                  </div>
+                  {monster.document_title && (
+                    <p className="text-xs text-slate-600 mt-1 truncate">
+                      {monster.document_title}
+                    </p>
+                  )}
+                </div>
               </Link>
             ))}
           </div>
 
           {pagination && pagination.pages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex items-center justify-center gap-3">
+              <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                className="px-4 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 transition-colors"
               >
                 Назад
-              </Button>
-              <span className="text-sm text-muted-foreground">
+              </button>
+              <span className="text-sm text-slate-500">
                 {page} / {pagination.pages}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() =>
                   setPage((p) => Math.min(pagination.pages, p + 1))
                 }
                 disabled={page === pagination.pages}
+                className="px-4 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 transition-colors"
               >
                 Далі
-              </Button>
+              </button>
             </div>
           )}
         </>

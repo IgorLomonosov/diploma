@@ -1,11 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import Link from 'next/link'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 
 interface Equipment {
   _id: string
@@ -13,24 +9,22 @@ interface Equipment {
   name_en: string
   name_uk: string
   category: string
-  armor_category: string
   damage_dice: string
   damage_type: string
   weapon_range: string
   armor_class: string
+  armor_category: string
   cost: string
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  weapon: '⚔️ Зброя',
-  armor: '🛡️ Обладунок',
-}
+const selectClass =
+  'h-9 rounded-md border border-slate-700 bg-slate-800 text-slate-200 px-3 text-sm'
 
 export default function EquipmentPage() {
   const [items, setItems] = useState<Equipment[]>([])
   const [pagination, setPagination] = useState<{
-    total: number
     pages: number
+    total: number
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -47,8 +41,6 @@ export default function EquipmentPage() {
       const data = await res.json()
       setItems(data.data)
       setPagination(data.pagination)
-    } catch (err) {
-      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -62,12 +54,11 @@ export default function EquipmentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Спорядження</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-3xl font-bold text-white">Спорядження</h1>
+        <p className="text-slate-400 mt-1">
           {pagination?.total ?? '...'} предметів у базі
         </p>
       </div>
-
       <div className="flex flex-wrap gap-3">
         <Input
           placeholder="Пошук..."
@@ -76,7 +67,7 @@ export default function EquipmentPage() {
             setSearch(e.target.value)
             setPage(1)
           }}
-          className="max-w-xs"
+          className="max-w-xs bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
         />
         <select
           value={category}
@@ -84,42 +75,47 @@ export default function EquipmentPage() {
             setCategory(e.target.value)
             setPage(1)
           }}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          className={selectClass}
         >
           <option value="">Всі категорії</option>
-          <option value="weapon">⚔️ Зброя</option>
-          <option value="armor">🛡️ Обладунок</option>
+          <option value="weapon">Зброя</option>
+          <option value="armor">Обладунок</option>
         </select>
       </div>
-
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-28 rounded-lg bg-muted animate-pulse" />
+            <div
+              key={i}
+              className="h-28 rounded-xl bg-slate-800/50 animate-pulse"
+            />
           ))}
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {items.map((item) => (
-              <Card
+              <div
                 key={item._id}
-                className="hover:shadow-md transition-shadow h-full"
+                className="p-4 rounded-xl border border-slate-700 bg-slate-900/60 h-full"
               >
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base">
-                    {item.name_uk || item.name_en}
-                  </CardTitle>
-                  {item.name_uk && (
-                    <p className="text-sm text-muted-foreground">
-                      {item.name_en}
-                    </p>
+                <p className="font-semibold text-white mb-1">
+                  {item.name_uk || item.name_en}
+                </p>
+                {item.name_uk && (
+                  <p className="text-sm text-slate-500 mb-2">{item.name_en}</p>
+                )}
+                <div className="flex flex-wrap gap-1 mb-2">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                    {item.category === 'weapon' ? 'Зброя' : 'Обладунок'}
+                  </span>
+                  {item.armor_category && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+                      {item.armor_category}
+                    </span>
                   )}
-                </CardHeader>
-                <CardContent className="text-sm space-y-1.5">
-                  <Badge variant="outline">
-                    {CATEGORY_LABELS[item.category] || item.category}
-                  </Badge>
+                </div>
+                <div className="text-sm text-slate-400 space-y-0.5">
                   {item.damage_dice && (
                     <p>
                       ⚔️ {item.damage_dice} {item.damage_type} ·{' '}
@@ -128,35 +124,33 @@ export default function EquipmentPage() {
                   )}
                   {item.armor_class && <p>🛡️ КО: {item.armor_class}</p>}
                   {item.cost && (
-                    <p className="text-muted-foreground">💰 {item.cost}</p>
+                    <p className="text-slate-500">💰 {item.cost}</p>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
           {pagination && pagination.pages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex items-center justify-center gap-3">
+              <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
+                className="px-4 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 transition-colors"
               >
                 Назад
-              </Button>
-              <span className="text-sm text-muted-foreground">
+              </button>
+              <span className="text-sm text-slate-500">
                 {page} / {pagination.pages}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() =>
                   setPage((p) => Math.min(pagination.pages, p + 1))
                 }
                 disabled={page === pagination.pages}
+                className="px-4 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-40 transition-colors"
               >
                 Далі
-              </Button>
+              </button>
             </div>
           )}
         </>

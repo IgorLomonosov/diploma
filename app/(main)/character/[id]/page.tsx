@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { t } from '@/lib/utils/translations'
 
 const ABILITY_LABELS: Record<string, string> = {
@@ -17,33 +14,33 @@ const ABILITY_LABELS: Record<string, string> = {
 }
 
 const SKILL_ABILITY: Record<string, string> = {
-  'Акробатика': 'dexterity',
+  Акробатика: 'dexterity',
   'Догляд за тваринами': 'wisdom',
   'Таємні знання': 'intelligence',
-  'Атлетика': 'strength',
-  'Обман': 'charisma',
-  'Історія': 'intelligence',
-  'Проникливість': 'wisdom',
-  'Залякування': 'charisma',
-  'Розслідування': 'intelligence',
-  'Медицина': 'wisdom',
-  'Природознавство': 'intelligence',
-  'Сприйняття': 'wisdom',
-  'Виступ': 'charisma',
-  'Переконання': 'charisma',
-  'Релігія': 'intelligence',
+  Атлетика: 'strength',
+  Обман: 'charisma',
+  Історія: 'intelligence',
+  Проникливість: 'wisdom',
+  Залякування: 'charisma',
+  Розслідування: 'intelligence',
+  Медицина: 'wisdom',
+  Природознавство: 'intelligence',
+  Сприйняття: 'wisdom',
+  Виступ: 'charisma',
+  Переконання: 'charisma',
+  Релігія: 'intelligence',
   'Спритність рук': 'dexterity',
-  'Непомітність': 'dexterity',
-  'Виживання': 'wisdom',
+  Непомітність: 'dexterity',
+  Виживання: 'wisdom',
 }
 
 const DEFAULT_SKILLS = Object.keys(SKILL_ABILITY)
+const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
 
 function modifier(val: number) {
   const mod = Math.floor((val - 10) / 2)
   return mod >= 0 ? `+${mod}` : `${mod}`
 }
-
 function modNum(val: number) {
   return Math.floor((val - 10) / 2)
 }
@@ -84,19 +81,26 @@ export default function CharacterSheetPage() {
     setHpDelta('')
   }
 
-  if (loading) return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-40 rounded-lg bg-muted" />
-      ))}
-    </div>
-  )
+  if (loading)
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-40 rounded-xl bg-slate-800/50" />
+        ))}
+      </div>
+    )
 
-  if (!character) return <p className="text-muted-foreground">Персонажа не знайдено</p>
+  if (!character) return <p className="text-slate-400">Персонажа не знайдено</p>
 
   const c = character
-  const abilities = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
-
+  const abilities = [
+    'strength',
+    'dexterity',
+    'constitution',
+    'intelligence',
+    'wisdom',
+    'charisma',
+  ]
   const skillList = DEFAULT_SKILLS.map((skillName) => {
     const saved = c.skills?.find((s: any) => s.name === skillName)
     const abilityKey = SKILL_ABILITY[skillName]
@@ -104,36 +108,53 @@ export default function CharacterSheetPage() {
     const profBonus = c.proficiency_bonus ?? 2
     const isProficient = saved?.proficient ?? false
     const isExpertise = saved?.expertise ?? false
-    const bonus = modNum(abilityVal) + (isExpertise ? profBonus * 2 : isProficient ? profBonus : 0)
-    return { name: skillName, bonus, isProficient, isExpertise, ability: ABILITY_LABELS[abilityKey] }
+    const bonus =
+      modNum(abilityVal) +
+      (isExpertise ? profBonus * 2 : isProficient ? profBonus : 0)
+    return {
+      name: skillName,
+      bonus,
+      isProficient,
+      isExpertise,
+      ability: ABILITY_LABELS[abilityKey],
+    }
   })
 
-  const hpPercent = c.max_hit_points > 0
-    ? Math.round((currentHp / c.max_hit_points) * 100)
-    : 0
-  const hpColor = hpPercent > 50 ? 'bg-green-500' : hpPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'
+  const hpPercent =
+    c.max_hit_points > 0 ? Math.round((currentHp / c.max_hit_points) * 100) : 0
+  const hpColor =
+    hpPercent > 50
+      ? 'bg-green-500'
+      : hpPercent > 25
+        ? 'bg-yellow-500'
+        : 'bg-red-500'
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-5">
       {/* Шапка */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold">{c.name}</h1>
-          <p className="text-muted-foreground mt-1">
-            {c.race && `${c.race} · `}{c.class} {c.level} рівня
-            {c.background && ` · ${c.background}`}
+          <h1 className="text-3xl font-bold text-white">{c.name}</h1>
+          <p className="text-slate-400 mt-1">
+            {c.race && `${c.race} · `}
+            {c.class} {c.level} рівня{c.background && ` · ${c.background}`}
           </p>
           {c.alignment && (
-            <p className="text-sm text-muted-foreground">
-              {t.alignment(c.alignment)}
-            </p>
+            <p className="text-sm text-slate-500">{t.alignment(c.alignment)}</p>
           )}
         </div>
         <div className="flex gap-2">
-          {c.inspiration && <Badge>✨ Натхнення</Badge>}
-          <Button variant="outline" size="sm" onClick={() => router.push(`/character/${id}/edit`)}>
+          {c.inspiration && (
+            <span className="px-3 py-1 rounded-full bg-yellow-900/40 border border-yellow-700 text-yellow-300 text-sm">
+              ✨ Натхнення
+            </span>
+          )}
+          <button
+            onClick={() => router.push(`/character/${id}/edit`)}
+            className="px-3 py-1.5 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+          >
             Редагувати
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -145,127 +166,137 @@ export default function CharacterSheetPage() {
           { label: 'Бонус майстерності', value: `+${c.proficiency_bonus}` },
           { label: 'Досвід', value: c.experience_points },
         ].map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="pt-4 text-center">
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
-            </CardContent>
-          </Card>
+          <div key={stat.label} className={`${cardClass} text-center`}>
+            <div className="text-2xl font-bold text-white">{stat.value}</div>
+            <div className="text-xs text-slate-500 mt-1">{stat.label}</div>
+          </div>
         ))}
       </div>
 
       {/* Здоров'я */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>Пункти здоров'я</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold">{currentHp}</span>
-            <span className="text-muted-foreground">/ {c.max_hit_points}</span>
-          </div>
-          <div className="w-full bg-muted rounded-full h-3">
-            <div
-              className={`h-3 rounded-full transition-all ${hpColor}`}
-              style={{ width: `${hpPercent}%` }}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              value={hpDelta}
-              onChange={(e) => setHpDelta(e.target.value)}
-              placeholder="0"
-              className="w-20 h-9 rounded-md border border-input bg-background px-3 text-sm"
-              min="0"
-            />
-            <Button size="sm" variant="outline" className="text-green-600" onClick={() => applyDelta(1)}>
-              + Зцілення
-            </Button>
-            <Button size="sm" variant="outline" className="text-red-600" onClick={() => applyDelta(-1)}>
-              − Шкода
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => updateHp(c.max_hit_points)}>
-              Повне зцілення
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cardClass}>
+        <h2 className="text-base font-semibold text-white mb-3">
+          Пункти здоров'я
+        </h2>
+        <div className="flex items-center gap-3 mb-3">
+          <span className="text-4xl font-bold text-white">{currentHp}</span>
+          <span className="text-slate-500">/ {c.max_hit_points}</span>
+        </div>
+        <div className="w-full bg-slate-800 rounded-full h-3 mb-3">
+          <div
+            className={`h-3 rounded-full transition-all ${hpColor}`}
+            style={{ width: `${hpPercent}%` }}
+          />
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            type="number"
+            value={hpDelta}
+            onChange={(e) => setHpDelta(e.target.value)}
+            placeholder="0"
+            className="w-20 h-9 rounded-md border border-slate-700 bg-slate-800 text-white px-3 text-sm"
+            min="0"
+          />
+          <button
+            onClick={() => applyDelta(1)}
+            className="px-3 py-1.5 text-sm rounded-md border border-green-800 text-green-400 hover:bg-green-900/30 transition-colors"
+          >
+            + Зцілення
+          </button>
+          <button
+            onClick={() => applyDelta(-1)}
+            className="px-3 py-1.5 text-sm rounded-md border border-red-800 text-red-400 hover:bg-red-900/30 transition-colors"
+          >
+            − Шкода
+          </button>
+          <button
+            onClick={() => updateHp(c.max_hit_points)}
+            className="px-3 py-1.5 text-sm rounded-md border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            Повне зцілення
+          </button>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Характеристики */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Характеристики</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-3">
-              {abilities.map((ab) => (
-                <div key={ab} className="text-center border rounded-lg p-3">
-                  <div className="text-xs text-muted-foreground font-medium mb-1">
-                    {ABILITY_LABELS[ab]}
-                  </div>
-                  <div className="text-2xl font-bold">{c[ab]}</div>
-                  <div className="text-sm text-muted-foreground">{modifier(c[ab])}</div>
+        <div className={cardClass}>
+          <h2 className="text-base font-semibold text-white mb-3">
+            Характеристики
+          </h2>
+          <div className="grid grid-cols-3 gap-3">
+            {abilities.map((ab) => (
+              <div
+                key={ab}
+                className="text-center rounded-lg border border-slate-700 bg-slate-800/50 p-3"
+              >
+                <div className="text-xs font-medium text-slate-500 mb-1">
+                  {ABILITY_LABELS[ab]}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <div className="text-2xl font-bold text-white">{c[ab]}</div>
+                <div className="text-sm text-slate-400">{modifier(c[ab])}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Навички */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Навички</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-1">
+        <div className={cardClass}>
+          <h2 className="text-base font-semibold text-white mb-3">Навички</h2>
+          <div className="space-y-1">
             {skillList.map((skill) => (
-              <div key={skill.name} className="flex items-center justify-between text-sm">
+              <div
+                key={skill.name}
+                className="flex items-center justify-between text-sm"
+              >
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${skill.isExpertise ? 'bg-primary' : skill.isProficient ? 'bg-primary/50' : 'bg-muted'}`} />
-                  <span>{skill.name}</span>
-                  <span className="text-xs text-muted-foreground">({skill.ability})</span>
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${skill.isExpertise ? 'bg-red-400' : skill.isProficient ? 'bg-slate-400' : 'bg-slate-700'}`}
+                  />
+                  <span className="text-slate-300">{skill.name}</span>
+                  <span className="text-xs text-slate-600">
+                    ({skill.ability})
+                  </span>
                 </div>
-                <span className="font-medium tabular-nums">
+                <span className="font-medium tabular-nums text-white">
                   {skill.bonus >= 0 ? `+${skill.bonus}` : skill.bonus}
                 </span>
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Інвентар */}
       {c.inventory?.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Інвентар</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {c.inventory.map((item: any, i: number) => (
-                <div key={i} className="flex items-start gap-2 text-sm p-2 rounded border">
-                  <span className="font-medium min-w-0 flex-1">{item.name}</span>
-                  {item.quantity > 1 && (
-                    <Badge variant="secondary" className="shrink-0">×{item.quantity}</Badge>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className={cardClass}>
+          <h2 className="text-base font-semibold text-white mb-3">Інвентар</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {c.inventory.map((item: any, i: number) => (
+              <div
+                key={i}
+                className="flex items-center justify-between text-sm p-2 rounded-lg border border-slate-700 bg-slate-800/50"
+              >
+                <span className="text-slate-300">{item.name}</span>
+                {item.quantity > 1 && (
+                  <span className="text-xs text-slate-500">
+                    ×{item.quantity}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Нотатки */}
       {c.notes && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Нотатки</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm whitespace-pre-line text-muted-foreground">
+        <div className={cardClass}>
+          <h2 className="text-base font-semibold text-white mb-3">Нотатки</h2>
+          <p className="text-sm text-slate-400 whitespace-pre-line">
             {c.notes}
-          </CardContent>
-        </Card>
+          </p>
+        </div>
       )}
     </div>
   )

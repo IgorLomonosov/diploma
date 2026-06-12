@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -10,44 +9,32 @@ interface Result {
   success?: number
   errors?: number
   total?: number
+  upserted?: number
 }
-
 interface LogEntry {
   time: string
   message: string
   result?: Result
   error?: boolean
 }
-
 interface ContentItem {
   _id: string
   name_en: string
   name_uk: string
   slug: string
-  [key: string]: any
-}
-
-interface Stats {
-  monsters: number
-  spells: number
-  races: number
-  classes: number
-  backgrounds: number
-  feats: number
-  magicItems: number
 }
 
 const SCRAPE_TYPES = [
-  { type: 'monsters', label: 'Монстри', maxPages: 50 },
-  { type: 'spells', label: 'Заклинання', maxPages: 20 },
-  { type: 'races', label: 'Раси', maxPages: 5 },
-  { type: 'classes', label: 'Класи', maxPages: 5 },
-  { type: 'backgrounds', label: 'Передісторії', maxPages: 5 },
-  { type: 'feats', label: 'Здібності', maxPages: 10 },
-  { type: 'magic-items', label: 'Магічні предмети', maxPages: 20 },
-  { type: 'conditions', label: 'Стани', maxPages: 1 },
-  { type: 'equipment', label: 'Спорядження', maxPages: 1 },
-  { type: 'sections', label: 'Правила', maxPages: 5 },
+  { type: 'monsters', label: 'Монстри', defaultPages: 50 },
+  { type: 'spells', label: 'Заклинання', defaultPages: 20 },
+  { type: 'races', label: 'Раси', defaultPages: 5 },
+  { type: 'classes', label: 'Класи', defaultPages: 5 },
+  { type: 'backgrounds', label: 'Передісторії', defaultPages: 5 },
+  { type: 'feats', label: 'Здібності', defaultPages: 10 },
+  { type: 'magic-items', label: 'Магічні предмети', defaultPages: 20 },
+  { type: 'conditions', label: 'Стани', defaultPages: 1 },
+  { type: 'equipment', label: 'Спорядження', defaultPages: 1 },
+  { type: 'sections', label: 'Правила', defaultPages: 5 },
 ]
 
 const TRANSLATE_TYPES = [
@@ -64,16 +51,24 @@ const CONTENT_TYPES = [
   { key: 'backgrounds', label: 'Передісторії', api: '/api/backgrounds' },
   { key: 'feats', label: 'Здібності', api: '/api/feats' },
   { key: 'magic-items', label: 'Магічні предмети', api: '/api/magic-items' },
+  { key: 'conditions', label: 'Стани', api: '/api/conditions' },
+  { key: 'equipment', label: 'Спорядження', api: '/api/equipment' },
+  { key: 'sections', label: 'Правила', api: '/api/sections' },
 ]
+
+const inputClass =
+  'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 h-9'
+const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
 
 export default function AdminPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [log, setLog] = useState<LogEntry[]>([])
   const [translateLimit, setTranslateLimit] = useState(10)
-  const [stats, setStats] = useState<Stats | null>(null)
   const [activeTab, setActiveTab] = useState<'scrape' | 'manage'>('scrape')
+  const [pages, setPages] = useState<Record<string, number>>(
+    Object.fromEntries(SCRAPE_TYPES.map((t) => [t.type, t.defaultPages])),
+  )
 
-  // Управління контентом
   const [selectedType, setSelectedType] = useState(CONTENT_TYPES[0])
   const [items, setItems] = useState<ContentItem[]>([])
   const [itemsLoading, setItemsLoading] = useState(false)
@@ -81,6 +76,7 @@ export default function AdminPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [stats, setStats] = useState<Record<string, number>>({})
 
   const addLog = (message: string, result?: Result, error = false) => {
     const time = new Date().toLocaleTimeString('uk-UA')
@@ -94,15 +90,11 @@ export default function AdminPage() {
           fetch(`${t.api}?limit=1`).then((r) => r.json()),
         ),
       )
-      setStats({
-        monsters: results[0].pagination?.total ?? 0,
-        spells: results[1].pagination?.total ?? 0,
-        races: results[2].pagination?.total ?? 0,
-        classes: results[3].pagination?.total ?? 0,
-        backgrounds: results[4].pagination?.total ?? 0,
-        feats: results[5].pagination?.total ?? 0,
-        magicItems: results[6].pagination?.total ?? 0,
+      const s: Record<string, number> = {}
+      CONTENT_TYPES.forEach((t, i) => {
+        s[t.key] = results[i].pagination?.total ?? results[i].total ?? 0
       })
+      setStats(s)
     } catch {}
   }, [])
 
@@ -141,28 +133,28 @@ export default function AdminPage() {
       })
       if (!res.ok) throw new Error('Помилка видалення')
       setItems((prev) => prev.filter((i) => i._id !== id))
-      addLog(`🗑️ Видалено запис з ${selectedType.label}`)
+      addLog(`Видалено запис з ${selectedType.label}`)
       fetchStats()
     } catch (err: any) {
-      addLog(`❌ ${err.message}`, undefined, true)
+      addLog(err.message, undefined, true)
     }
   }
 
-  const runScrape = async (type: string, maxPages: number) => {
+  const runScrape = async (type: string) => {
     setLoading(`scrape-${type}`)
-    addLog(`⏳ Скрапінг "${type}" розпочато...`)
+    addLog(`Скрапінг "${type}" розпочато...`)
     try {
       const res = await fetch('/api/admin/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, maxPages }),
+        body: JSON.stringify({ type, maxPages: pages[type] }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      addLog(`✅ ${data.message}`, data.result)
+      addLog(data.message, data.result)
       fetchStats()
     } catch (err: any) {
-      addLog(`❌ Помилка: ${err.message}`, undefined, true)
+      addLog(err.message, undefined, true)
     } finally {
       setLoading(null)
     }
@@ -170,7 +162,7 @@ export default function AdminPage() {
 
   const runTranslate = async (type: string) => {
     setLoading(`translate-${type}`)
-    addLog(`⏳ Переклад "${type}" (ліміт: ${translateLimit})...`)
+    addLog(`Переклад "${type}" (ліміт: ${translateLimit})...`)
     try {
       const res = await fetch('/api/admin/translate', {
         method: 'POST',
@@ -179,64 +171,49 @@ export default function AdminPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      addLog(`✅ ${data.message}`, data.result)
+      addLog(data.message, data.result)
     } catch (err: any) {
-      addLog(`❌ Помилка: ${err.message}`, undefined, true)
+      addLog(err.message, undefined, true)
     } finally {
       setLoading(null)
     }
   }
 
-  const statsMap = stats
-    ? [
-        stats.monsters,
-        stats.spells,
-        stats.races,
-        stats.classes,
-        stats.backgrounds,
-        stats.feats,
-        stats.magicItems,
-      ]
-    : []
-
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Адмін-панель</h1>
-        <p className="text-muted-foreground mt-1">
-          Управління контентом платформи
-        </p>
+        <h1 className="text-3xl font-bold text-white">Адмін-панель</h1>
+        <p className="text-slate-400 mt-1">Управління контентом платформи</p>
       </div>
 
       {/* Статистика */}
-      {stats && (
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-          {CONTENT_TYPES.map((t, i) => (
-            <Card key={t.key} className="text-center">
-              <CardContent className="pt-3 pb-3">
-                <div className="text-xl font-bold">{statsMap[i]}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {t.label}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+        {CONTENT_TYPES.map((t) => (
+          <div
+            key={t.key}
+            className="text-center p-2 rounded-lg border border-slate-700 bg-slate-900/50"
+          >
+            <div className="text-lg font-bold text-white">
+              {stats[t.key] ?? '—'}
+            </div>
+            <div className="text-xs text-slate-500 mt-0.5">{t.label}</div>
+          </div>
+        ))}
+      </div>
 
       {/* Таби */}
-      <div className="flex gap-2 border-b pb-0">
+      <div className="flex gap-1 border-b border-slate-700">
         {[
-          { key: 'scrape', label: '📥 Скрапінг і переклад' },
-          { key: 'manage', label: '🗂️ Управління контентом' },
+          { key: 'scrape', label: 'Скрапінг і переклад' },
+          { key: 'manage', label: 'Управління контентом' },
         ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'border-red-500 text-white'
+                : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             {tab.label}
@@ -244,135 +221,172 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Таб: Скрапінг */}
       {activeTab === 'scrape' && (
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Скрапінг контенту</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {SCRAPE_TYPES.map(({ type, label, maxPages }) => (
+        <div className="space-y-5">
+          {/* Скрапінг */}
+          <div className={cardClass}>
+            <h2 className="text-base font-semibold text-white mb-4">
+              Скрапінг контенту
+            </h2>
+            <div className="space-y-2">
+              {SCRAPE_TYPES.map(({ type, label }) => (
+                <div key={type} className="flex items-center gap-3">
+                  <span className="text-sm text-slate-300 w-40 shrink-0">
+                    {label}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">Сторінок:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={pages[type]}
+                      onChange={(e) =>
+                        setPages((p) => ({
+                          ...p,
+                          [type]: parseInt(e.target.value) || 1,
+                        }))
+                      }
+                      className="w-16 h-8 rounded border border-slate-700 bg-slate-800 text-white text-sm px-2"
+                    />
+                  </div>
                   <Button
-                    key={type}
+                    size="sm"
                     variant="outline"
-                    className="h-auto flex flex-col py-3 gap-1"
+                    className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-8"
                     disabled={loading !== null}
-                    onClick={() => runScrape(type, maxPages)}
+                    onClick={() => runScrape(type)}
                   >
-                    <span>{loading === `scrape-${type}` ? '⏳' : '📥'}</span>
-                    <span className="text-sm font-medium">{label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      до {maxPages} стор.
-                    </span>
+                    {loading === `scrape-${type}`
+                      ? 'Завантаження...'
+                      : 'Скрапити'}
                   </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Переклад (Gemini AI)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium">Ліміт за раз:</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={translateLimit}
-                  onChange={(e) =>
-                    setTranslateLimit(parseInt(e.target.value) || 10)
-                  }
-                  className="w-20 h-9 rounded-md border border-input bg-background px-3 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">
-                  (рекомендовано 5–20)
-                </span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {TRANSLATE_TYPES.map(({ type, label }) => (
+          {/* Переклад */}
+          <div className={cardClass}>
+            <h2 className="text-base font-semibold text-white mb-4">
+              Переклад (Gemini AI)
+            </h2>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm text-slate-300">Ліміт за раз:</span>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={translateLimit}
+                onChange={(e) =>
+                  setTranslateLimit(parseInt(e.target.value) || 10)
+                }
+                className="w-20 h-8 rounded border border-slate-700 bg-slate-800 text-white text-sm px-2"
+              />
+              <span className="text-xs text-slate-500">
+                (рекомендовано 5–20)
+              </span>
+            </div>
+            <div className="space-y-2">
+              {TRANSLATE_TYPES.map(({ type, label }) => (
+                <div key={type} className="flex items-center gap-3">
+                  <span className="text-sm text-slate-300 w-40 shrink-0">
+                    {label}
+                  </span>
                   <Button
-                    key={type}
+                    size="sm"
                     variant="outline"
-                    className="h-auto flex flex-col py-3 gap-1"
+                    className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-8"
                     disabled={loading !== null}
                     onClick={() => runTranslate(type)}
                   >
-                    <span>{loading === `translate-${type}` ? '⏳' : '🌐'}</span>
-                    <span className="text-sm font-medium">{label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {translateLimit} шт.
-                    </span>
+                    {loading === `translate-${type}`
+                      ? 'Переклад...'
+                      : 'Перекласти'}
                   </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          </div>
 
+          {/* Лог */}
           {log.length > 0 && (
-            <Card>
-              <CardHeader className="pb-2 flex flex-row items-center justify-between">
-                <CardTitle>Лог</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setLog([])}>
+            <div className={cardClass}>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-base font-semibold text-white">
+                  Лог операцій
+                </h2>
+                <button
+                  onClick={() => setLog([])}
+                  className="text-xs text-slate-400 hover:text-white"
+                >
                   Очистити
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-2 max-h-60 overflow-y-auto">
+                </button>
+              </div>
+              <div className="space-y-1.5 max-h-60 overflow-y-auto">
                 {log.map((entry, i) => (
                   <div
                     key={i}
-                    className={`text-sm p-2 rounded border ${entry.error ? 'border-red-200 bg-red-50 dark:bg-red-950/20' : 'border-border bg-muted/30'}`}
+                    className={`text-sm p-2 rounded border ${entry.error ? 'border-red-800 bg-red-950/30' : 'border-slate-700 bg-slate-800/50'}`}
                   >
                     <div className="flex justify-between gap-2">
-                      <span>{entry.message}</span>
-                      <span className="text-xs text-muted-foreground">
+                      <span
+                        className={
+                          entry.error ? 'text-red-400' : 'text-slate-300'
+                        }
+                      >
+                        {entry.message}
+                      </span>
+                      <span className="text-xs text-slate-500 shrink-0">
                         {entry.time}
                       </span>
                     </div>
                     {entry.result && (
                       <div className="flex gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          ✅ {entry.result.success}
-                        </Badge>
-                        {(entry.result.errors ?? 0) > 0 && (
-                          <Badge variant="destructive" className="text-xs">
-                            ❌ {entry.result.errors}
+                        {entry.result.upserted !== undefined && (
+                          <Badge variant="secondary" className="text-xs">
+                            збережено: {entry.result.upserted}
                           </Badge>
                         )}
-                        <Badge variant="outline" className="text-xs">
-                          всього: {entry.result.total}
-                        </Badge>
+                        {entry.result.success !== undefined && (
+                          <Badge variant="secondary" className="text-xs">
+                            успішно: {entry.result.success}
+                          </Badge>
+                        )}
+                        {(entry.result.errors ?? 0) > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            помилок: {entry.result.errors}
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       )}
 
-      {/* Таб: Управління */}
       {activeTab === 'manage' && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             {CONTENT_TYPES.map((t) => (
-              <Button
+              <button
                 key={t.key}
-                size="sm"
-                variant={selectedType.key === t.key ? 'default' : 'outline'}
                 onClick={() => {
                   setSelectedType(t)
                   setPage(1)
                   setSearch('')
                 }}
+                className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                  selectedType.key === t.key
+                    ? 'bg-red-800 border-red-700 text-white'
+                    : 'border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
               >
                 {t.label}
-              </Button>
+              </button>
             ))}
           </div>
 
@@ -384,105 +398,102 @@ export default function AdminPage() {
                 setSearch(e.target.value)
                 setPage(1)
               }}
-              className="max-w-xs"
+              className={`max-w-xs ${inputClass}`}
             />
-            <Button variant="outline" size="sm" onClick={fetchItems}>
-              🔄 Оновити
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchItems}
+              className="border-slate-700 text-slate-300 hover:text-white"
+            >
+              Оновити
             </Button>
           </div>
 
-          <Card>
-            <CardContent className="pt-4">
-              {itemsLoading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-10 rounded bg-muted animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : items.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Нічого не знайдено
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  {items.map((item) => (
-                    <div
-                      key={item._id}
-                      className="flex items-center justify-between p-2 rounded hover:bg-muted gap-3"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm">
-                          {item.name_uk || item.name_en}
+          <div className={cardClass}>
+            {itemsLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-10 rounded bg-slate-800 animate-pulse"
+                  />
+                ))}
+              </div>
+            ) : items.length === 0 ? (
+              <p className="text-center text-slate-500 py-8">
+                Нічого не знайдено
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {items.map((item) => (
+                  <div
+                    key={item._id}
+                    className="flex items-center justify-between p-2 rounded hover:bg-slate-800/50 gap-3"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-sm text-white">
+                        {item.name_uk || item.name_en}
+                      </span>
+                      {item.name_uk && (
+                        <span className="text-xs text-slate-500 ml-2">
+                          {item.name_en}
                         </span>
-                        {item.name_uk && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {item.name_en}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {!item.name_uk && (
-                          <Badge
-                            variant="outline"
-                            className="text-xs text-orange-500"
-                          >
-                            не перекладено
-                          </Badge>
-                        )}
-                        <Button
-                          size="sm"
-                          variant={
-                            deleteConfirm === item._id ? 'destructive' : 'ghost'
-                          }
-                          className="h-7 px-2 text-xs"
-                          onClick={() => handleDelete(item._id)}
-                        >
-                          {deleteConfirm === item._id ? 'Підтвердити' : '🗑️'}
-                        </Button>
-                        {deleteConfirm === item._id && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 px-2 text-xs"
-                            onClick={() => setDeleteConfirm(null)}
-                          >
-                            Скасувати
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
-
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 1}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    Назад
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {page} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === totalPages}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Далі
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {!item.name_uk && (
+                        <span className="text-xs text-orange-500">
+                          не перекладено
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        className={`text-xs px-2 py-1 rounded border transition-colors ${
+                          deleteConfirm === item._id
+                            ? 'bg-red-800 border-red-700 text-white'
+                            : 'border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-800'
+                        }`}
+                      >
+                        {deleteConfirm === item._id
+                          ? 'Підтвердити'
+                          : 'Видалити'}
+                      </button>
+                      {deleteConfirm === item._id && (
+                        <button
+                          onClick={() => setDeleteConfirm(null)}
+                          className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-white"
+                        >
+                          Скасувати
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="text-sm px-3 py-1 rounded border border-slate-700 text-slate-400 hover:text-white disabled:opacity-40"
+                >
+                  Назад
+                </button>
+                <span className="text-sm text-slate-500">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  disabled={page === totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="text-sm px-3 py-1 rounded border border-slate-700 text-slate-400 hover:text-white disabled:opacity-40"
+                >
+                  Далі
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

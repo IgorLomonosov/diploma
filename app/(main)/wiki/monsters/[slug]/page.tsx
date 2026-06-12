@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation'
 import connectDB from '@/lib/db/mongoose'
 import Monster from '@/lib/db/models/Monster'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import ReactMarkdown from 'react-markdown'
 import { t } from '@/lib/utils/translations'
 
@@ -10,12 +8,19 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
+const modifier = (val: number) => {
+  const mod = Math.floor((val - 10) / 2)
+  return mod >= 0 ? `+${mod}` : `${mod}`
+}
+
+const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
+const sectionTitle = 'text-base font-semibold text-white mb-3'
+
 export default async function MonsterPage({ params }: Props) {
   const { slug } = await params
   await connectDB()
   const monster = await Monster.findOne({ slug }).lean()
   if (!monster) notFound()
-
   const m = monster as any
 
   const stats = [
@@ -27,54 +32,49 @@ export default async function MonsterPage({ params }: Props) {
     { label: 'ХАР', value: m.charisma, save: m.charisma_save },
   ]
 
-  const modifier = (val: number) => {
-    const mod = Math.floor((val - 10) / 2)
-    return mod >= 0 ? `+${mod}` : `${mod}`
-  }
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <div className="flex items-start justify-between flex-wrap gap-2">
-          <div>
-            <h1 className="text-3xl font-bold">{m.name_uk || m.name_en}</h1>
-            {m.name_uk && <p className="text-muted-foreground">{m.name_en}</p>}
-          </div>
-          <Badge variant="outline" className="text-base px-3 py-1">
-            CR {m.challenge_rating}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground mt-1">
-          {t.size(m.size)} {t.type(m.type, m.type_uk)} ·{' '}
-          {t.alignment(m.alignment, m.alignment_uk)}
-        </p>
-        {m.document_title && (
-          <p className="text-sm text-muted-foreground mt-1">
-            📖 {m.document_title}
+    <div className="max-w-4xl mx-auto space-y-5">
+      {/* Шапка */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-white">
+            {m.name_uk || m.name_en}
+          </h1>
+          {m.name_uk && <p className="text-slate-400">{m.name_en}</p>}
+          <p className="text-slate-400 mt-1">
+            {t.size(m.size)} {t.type(m.type, m.type_uk)} ·{' '}
+            {t.alignment(m.alignment, m.alignment_uk)}
           </p>
-        )}
+          {m.document_title && (
+            <p className="text-xs text-slate-600 mt-1">{m.document_title}</p>
+          )}
+        </div>
+        <span className="px-3 py-1 rounded-full border border-red-800 bg-red-900/30 text-red-300 font-semibold text-sm">
+          CR {m.challenge_rating}
+        </span>
       </div>
 
-      <Card>
-        <CardContent className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+      {/* Бойові характеристики */}
+      <div className={cardClass}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm text-slate-300">
           <div>
-            <span className="font-medium">Клас обладунку:</span> {m.armor_class}{' '}
-            {(m.armor_desc_uk || m.armor_desc) &&
-              `(${m.armor_desc_uk || m.armor_desc})`}
-          </div>
-
-          <div>
-            <span className="font-medium">Пункти здоров'я:</span> {m.hit_points}{' '}
-            ({m.hit_dice})
+            <span className="text-slate-500">Клас обладунку: </span>
+            {m.armor_class}
+            {m.armor_desc_uk || m.armor_desc
+              ? ` (${m.armor_desc_uk || m.armor_desc})`
+              : ''}
           </div>
           <div>
-            <span className="font-medium">Швидкість:</span>{' '}
+            <span className="text-slate-500">Пункти здоров'я: </span>
+            {m.hit_points} ({m.hit_dice})
+          </div>
+          <div>
+            <span className="text-slate-500">Швидкість: </span>
             {m.speed_uk || m.speed}
           </div>
-
           {m.initiative_bonus !== undefined && (
             <div>
-              <span className="font-medium">Ініціатива:</span>{' '}
+              <span className="text-slate-500">Ініціатива: </span>
               {m.initiative_bonus >= 0
                 ? `+${m.initiative_bonus}`
                 : m.initiative_bonus}
@@ -82,154 +82,166 @@ export default async function MonsterPage({ params }: Props) {
           )}
           {m.xp > 0 && (
             <div>
-              <span className="font-medium">Досвід:</span> {m.xp} XP
+              <span className="text-slate-500">Досвід: </span>
+              {m.xp} XP
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent className="pt-4">
-          <div className="grid grid-cols-6 gap-2 text-center">
-            {stats.map((stat) => (
-              <div key={stat.label} className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {stat.label}
-                </div>
-                <div className="text-lg font-bold">{stat.value}</div>
-                <div className="text-sm">({modifier(stat.value)})</div>
-                {stat.save !== null && stat.save !== undefined && (
-                  <div className="text-xs text-muted-foreground">
-                    Рят: {stat.save >= 0 ? `+${stat.save}` : stat.save}
-                  </div>
-                )}
+      {/* Характеристики */}
+      <div className={cardClass}>
+        <div className="grid grid-cols-6 gap-2 text-center">
+          {stats.map((stat) => (
+            <div key={stat.label} className="space-y-1">
+              <div className="text-xs font-medium text-slate-500">
+                {stat.label}
               </div>
-            ))}
+              <div className="text-xl font-bold text-white">{stat.value}</div>
+              <div className="text-sm text-slate-400">
+                ({modifier(stat.value)})
+              </div>
+              {stat.save != null && (
+                <div className="text-xs text-slate-500">
+                  Рят: {stat.save >= 0 ? `+${stat.save}` : stat.save}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Додаткові поля */}
+      <div
+        className={`${cardClass} grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm`}
+      >
+        {(m.skills_uk || m.skills) && (
+          <div>
+            <span className="text-slate-500">Навички: </span>
+            <span className="text-slate-300">{m.skills_uk || m.skills}</span>
           </div>
-        </CardContent>
-      </Card>
+        )}
+        {(m.damage_resistances_uk || m.damage_resistances) && (
+          <div>
+            <span className="text-slate-500">Стійкості: </span>
+            <span className="text-slate-300">
+              {m.damage_resistances_uk || m.damage_resistances}
+            </span>
+          </div>
+        )}
+        {(m.damage_immunities_uk || m.damage_immunities) && (
+          <div>
+            <span className="text-slate-500">Імунітети: </span>
+            <span className="text-slate-300">
+              {m.damage_immunities_uk || m.damage_immunities}
+            </span>
+          </div>
+        )}
+        {(m.condition_immunities_uk || m.condition_immunities) && (
+          <div>
+            <span className="text-slate-500">Імунітет до станів: </span>
+            <span className="text-slate-300">
+              {m.condition_immunities_uk || m.condition_immunities}
+            </span>
+          </div>
+        )}
+        {(m.senses_uk || m.senses) && (
+          <div>
+            <span className="text-slate-500">Відчуття: </span>
+            <span className="text-slate-300">{m.senses_uk || m.senses}</span>
+          </div>
+        )}
+        {(m.languages_uk || m.languages) && (
+          <div>
+            <span className="text-slate-500">Мови: </span>
+            <span className="text-slate-300">
+              {m.languages_uk || m.languages}
+            </span>
+          </div>
+        )}
+      </div>
 
-      {(m.skills_uk || m.skills) && (
-        <div className="text-sm">
-          <span className="font-medium">Навички: </span>
-          {m.skills_uk || m.skills}
-        </div>
-      )}
-      {(m.damage_resistances_uk || m.damage_resistances) && (
-        <div className="text-sm">
-          <span className="font-medium">Стійкості до пошкоджень: </span>
-          {m.damage_resistances_uk || m.damage_resistances}
-        </div>
-      )}
-      {(m.damage_immunities_uk || m.damage_immunities) && (
-        <div className="text-sm">
-          <span className="font-medium">Імунітети: </span>
-          {m.damage_immunities_uk || m.damage_immunities}
-        </div>
-      )}
-      {(m.condition_immunities_uk || m.condition_immunities) && (
-        <div className="text-sm">
-          <span className="font-medium">Імунітет до станів: </span>
-          {m.condition_immunities_uk || m.condition_immunities}
-        </div>
-      )}
-      {(m.senses_uk || m.senses) && (
-        <div className="text-sm">
-          <span className="font-medium">Відчуття: </span>
-          {m.senses_uk || m.senses}
-        </div>
-      )}
-      {(m.languages_uk || m.languages) && (
-        <div className="text-sm">
-          <span className="font-medium">Мови: </span>
-          {m.languages_uk || m.languages}
-        </div>
-      )}
-
+      {/* Опис */}
       {m.description_uk && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Опис</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm leading-relaxed whitespace-pre-line">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Опис</h2>
+          <div className="text-sm text-slate-300 leading-relaxed">
             <ReactMarkdown
               components={{
                 p: ({ children }) => (
                   <p className="mb-3 last:mb-0">{children}</p>
                 ),
                 strong: ({ children }) => (
-                  <strong className="font-semibold">{children}</strong>
+                  <strong className="font-semibold text-white">
+                    {children}
+                  </strong>
                 ),
               }}
             >
               {m.description_uk}
             </ReactMarkdown>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
+      {/* Риси */}
       {m.special_abilities?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Риси</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Риси</h2>
+          <div className="space-y-3">
             {m.special_abilities.map((a: any, i: number) => (
-              <div key={i}>
-                <span className="font-medium">{a.name}. </span>
-                <span className="text-sm">{a.description}</span>
+              <div key={i} className="text-sm text-slate-300">
+                <span className="font-semibold text-white">{a.name}. </span>
+                {a.description}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
+      {/* Дії */}
       {m.actions?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Дії</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Дії</h2>
+          <div className="space-y-3">
             {m.actions.map((a: any, i: number) => (
-              <div key={i}>
-                <span className="font-medium">{a.name}. </span>
-                <span className="text-sm">{a.description}</span>
+              <div key={i} className="text-sm text-slate-300">
+                <span className="font-semibold text-white">{a.name}. </span>
+                {a.description}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
+      {/* Реакції */}
       {m.reactions?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Реакції</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Реакції</h2>
+          <div className="space-y-3">
             {m.reactions.map((a: any, i: number) => (
-              <div key={i}>
-                <span className="font-medium">{a.name}. </span>
-                <span className="text-sm">{a.description}</span>
+              <div key={i} className="text-sm text-slate-300">
+                <span className="font-semibold text-white">{a.name}. </span>
+                {a.description}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
+      {/* Легендарні дії */}
       {m.legendary_actions?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Легендарні дії</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className={cardClass}>
+          <h2 className={sectionTitle}>Легендарні дії</h2>
+          <div className="space-y-3">
             {m.legendary_actions.map((a: any, i: number) => (
-              <div key={i}>
-                <span className="font-medium">{a.name}. </span>
-                <span className="text-sm">{a.description}</span>
+              <div key={i} className="text-sm text-slate-300">
+                <span className="font-semibold text-white">{a.name}. </span>
+                {a.description}
               </div>
             ))}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
     </div>
   )
