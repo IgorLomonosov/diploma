@@ -12,11 +12,11 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    //const session = await auth()
+    const session = await auth()
 
-    //if (!session || session.user.role !== 'moderator') {
-    //return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
-    //}
+    if (!session || session.user.role !== 'moderator') {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
 
     const { type, maxPages, document } = await req.json()
 

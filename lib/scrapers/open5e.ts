@@ -4,7 +4,7 @@ const BASE_URL = 'https://api.open5e.com/v1'
 
 const client = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
 })
 
 export interface Open5eMonster {
@@ -133,6 +133,7 @@ export interface Open5eFeat {
   slug: string
   name: string
   desc: string
+  effects_desc?: string[]
   prerequisite: string
   document__slug: string
   document__title: string

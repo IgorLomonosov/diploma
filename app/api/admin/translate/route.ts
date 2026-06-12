@@ -12,10 +12,10 @@ import Race from '@/lib/db/models/Race'
 
 export async function POST(req: NextRequest) {
   try {
-    //const session = await auth()
-    //if (!session || session.user.role !== 'moderator') {
-    //return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
-    //}
+    const session = await auth()
+    if (!session || session.user.role !== 'moderator') {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
 
     const { type, limit = 10 } = await req.json()
     await connectDB()

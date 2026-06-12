@@ -250,11 +250,16 @@ function transformBackground(raw: Open5eBackground) {
 }
 
 function transformFeat(raw: Open5eFeat) {
+  const effectsText = Array.isArray((raw as any).effects_desc)
+    ? '\n\n' +
+      ((raw as any).effects_desc as string[]).map((e) => `- ${e}`).join('\n')
+    : ''
+
   return {
     name_en: raw.name,
     name_uk: '',
     slug: raw.slug,
-    desc: raw.desc || '',
+    desc: (raw.desc || '') + effectsText,
     desc_uk: '',
     prerequisite: raw.prerequisite || '',
     prerequisite_uk: '',

@@ -11,6 +11,14 @@ export default auth((req) => {
     return NextResponse.redirect(new URL('/login', req.nextUrl))
   }
 
+  // Захист адмін-панелі — тільки moderator
+  if (req.nextUrl.pathname.startsWith('/admin')) {
+    const role = (req.auth?.user as any)?.role
+    if (role !== 'moderator') {
+      return NextResponse.redirect(new URL('/dashboard', req.nextUrl))
+    }
+  }
+
   return NextResponse.next()
 })
 
@@ -21,5 +29,7 @@ export const config = {
     '/encounter/:path*',
     '/chat/:path*',
     '/wiki/:path*',
+    '/admin/:path*',
+    '/dice/:path*',
   ],
 }

@@ -1,50 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-const RACES = [
-  'Людина',
-  'Ельф',
-  'Дворф',
-  'Гнім',
-  'Напівельф',
-  'Напіворк',
-  'Тіфлінг',
-  'Драконород',
-  'Гаплінг',
-  'Інше',
-]
-const CLASSES = [
-  'Варвар',
-  'Бард',
-  'Жрець',
-  'Друїд',
-  'Боєць',
-  'Чернець',
-  'Паладин',
-  'Слідопит',
-  'Злодій',
-  'Чаклун',
-  'Відьмак',
-  'Чарівник',
-]
-const BACKGROUNDS = [
-  'Прислужник',
-  'Злочинець',
-  'Народний герой',
-  'Шляхтич',
-  'Мудрець',
-  'Солдат',
-  'Странник',
-  'Моряк',
-  'Артист',
-  'Відлюдник',
-]
 const ALIGNMENTS = [
   'Законно-добрий',
   'Нейтрально-добрий',
@@ -66,10 +28,20 @@ const DEFAULT_STATS = {
   charisma: 10,
 }
 
+interface Option {
+  value: string
+  label: string
+}
+
 export default function NewCharacterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [races, setRaces] = useState<Option[]>([])
+  const [classes, setClasses] = useState<Option[]>([])
+  const [backgrounds, setBackgrounds] = useState<Option[]>([])
+  const [optionsLoading, setOptionsLoading] = useState(true)
+
   const [form, setForm] = useState({
     name: '',
     race: '',
@@ -85,6 +57,47 @@ export default function NewCharacterPage() {
     speed: 30,
     notes: '',
   })
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [racesRes, classesRes, bgsRes] = await Promise.all([
+          fetch('/api/races?limit=100'),
+          fetch('/api/classes?limit=100'),
+          fetch('/api/backgrounds?limit=100'),
+        ])
+        const [racesData, classesData, bgsData] = await Promise.all([
+          racesRes.json(),
+          classesRes.json(),
+          bgsRes.json(),
+        ])
+
+        setRaces(
+          (racesData.data || []).map((r: any) => ({
+            value: r.name_uk || r.name_en,
+            label: r.name_uk || r.name_en,
+          })),
+        )
+        setClasses(
+          (classesData.data || []).map((c: any) => ({
+            value: c.name_uk || c.name_en,
+            label: c.name_uk || c.name_en,
+          })),
+        )
+        setBackgrounds(
+          (bgsData.data || []).map((b: any) => ({
+            value: b.name_uk || b.name_en,
+            label: b.name_uk || b.name_en,
+          })),
+        )
+      } catch (err) {
+        console.error('Помилка завантаження опцій:', err)
+      } finally {
+        setOptionsLoading(false)
+      }
+    }
+    fetchOptions()
+  }, [])
 
   const update = (field: string, value: string | number) =>
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -129,6 +142,9 @@ export default function NewCharacterPage() {
     { key: 'charisma', label: 'Харизма' },
   ]
 
+  const selectClass =
+    'w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm'
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold">Новий персонаж</h1>
@@ -146,36 +162,45 @@ export default function NewCharacterPage() {
               onChange={(e) => update('name', e.target.value)}
             />
           </div>
+
           <div className="space-y-2">
             <Label>Раса</Label>
             <select
               value={form.race}
               onChange={(e) => update('race', e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+              className={selectClass}
+              disabled={optionsLoading}
             >
-              <option value="">Обери расу</option>
-              {RACES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
+              <option value="">
+                {optionsLoading ? 'Завантаження...' : 'Обери расу'}
+              </option>
+              {races.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
                 </option>
               ))}
             </select>
           </div>
+
           <div className="space-y-2">
             <Label>Клас</Label>
             <select
               value={form.class}
               onChange={(e) => update('class', e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+              className={selectClass}
+              disabled={optionsLoading}
             >
-              <option value="">Обери клас</option>
-              {CLASSES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              <option value="">
+                {optionsLoading ? 'Завантаження...' : 'Обери клас'}
+              </option>
+              {classes.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
                 </option>
               ))}
             </select>
           </div>
+
           <div className="space-y-2">
             <Label>Рівень</Label>
             <Input
@@ -186,27 +211,32 @@ export default function NewCharacterPage() {
               onChange={(e) => update('level', parseInt(e.target.value))}
             />
           </div>
+
           <div className="space-y-2">
             <Label>Передісторія</Label>
             <select
               value={form.background}
               onChange={(e) => update('background', e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+              className={selectClass}
+              disabled={optionsLoading}
             >
-              <option value="">Обери передісторію</option>
-              {BACKGROUNDS.map((b) => (
-                <option key={b} value={b}>
-                  {b}
+              <option value="">
+                {optionsLoading ? 'Завантаження...' : 'Обери передісторію'}
+              </option>
+              {backgrounds.map((b) => (
+                <option key={b.value} value={b.value}>
+                  {b.label}
                 </option>
               ))}
             </select>
           </div>
+
           <div className="space-y-2">
             <Label>Мировозрення</Label>
             <select
               value={form.alignment}
               onChange={(e) => update('alignment', e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+              className={selectClass}
             >
               <option value="">Обери мировозрення</option>
               {ALIGNMENTS.map((a) => (
@@ -224,46 +254,22 @@ export default function NewCharacterPage() {
           <CardTitle>Бойові характеристики</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label>Макс. ПЗ</Label>
-            <Input
-              type="number"
-              min={1}
-              value={form.max_hit_points}
-              onChange={(e) =>
-                update('max_hit_points', parseInt(e.target.value))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Поточні ПЗ</Label>
-            <Input
-              type="number"
-              min={0}
-              value={form.current_hit_points}
-              onChange={(e) =>
-                update('current_hit_points', parseInt(e.target.value))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Клас обладунку</Label>
-            <Input
-              type="number"
-              min={1}
-              value={form.armor_class}
-              onChange={(e) => update('armor_class', parseInt(e.target.value))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Швидкість (фут.)</Label>
-            <Input
-              type="number"
-              min={0}
-              value={form.speed}
-              onChange={(e) => update('speed', parseInt(e.target.value))}
-            />
-          </div>
+          {[
+            { key: 'max_hit_points', label: 'Макс. ПЗ' },
+            { key: 'current_hit_points', label: 'Поточні ПЗ' },
+            { key: 'armor_class', label: 'Клас обладунку' },
+            { key: 'speed', label: 'Швидкість (фут.)' },
+          ].map((f) => (
+            <div key={f.key} className="space-y-2">
+              <Label>{f.label}</Label>
+              <Input
+                type="number"
+                min={0}
+                value={form[f.key as keyof typeof form] as number}
+                onChange={(e) => update(f.key, parseInt(e.target.value))}
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 

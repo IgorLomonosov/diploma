@@ -5,9 +5,10 @@ import Character from '@/lib/db/models/Character'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session) {
       return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
@@ -16,7 +17,7 @@ export async function GET(
     await connectDB()
 
     const character = await Character.findOne({
-      _id: params.id,
+      _id: id,
       user_id: session.user.id,
     })
 
@@ -36,9 +37,10 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session) {
       return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
@@ -49,7 +51,7 @@ export async function PATCH(
     await connectDB()
 
     const character = await Character.findOneAndUpdate(
-      { _id: params.id, user_id: session.user.id },
+      { _id: id, user_id: session.user.id },
       { $set: body },
       { new: true },
     )
@@ -70,9 +72,10 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params
     const session = await auth()
     if (!session) {
       return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
@@ -81,7 +84,7 @@ export async function DELETE(
     await connectDB()
 
     const character = await Character.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       user_id: session.user.id,
     })
 

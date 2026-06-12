@@ -1,100 +1,108 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { loginAction } from './actions'
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const registered = searchParams.get('registered')
-
-  const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  const [form, setForm] = useState({ email: '', password: '' })
+
+  const handleSubmit = async () => {
+    if (!form.email || !form.password) {
+      setError('Заповніть всі поля')
+      return
+    }
     setLoading(true)
+    setError('')
     try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      })
-      if (result?.error) {
-        setError('Невірний email або пароль')
+      const result = await loginAction(form.email, form.password)
+      if (!result.success) {
+        setError(result.error || 'Помилка входу')
         return
       }
       router.push('/dashboard')
       router.refresh()
     } catch {
-      setError('Щось пішло не так. Спробуй ще раз.')
+      setError('Щось пішло не так')
     } finally {
       setLoading(false)
     }
   }
+
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">
-            Вхід в D&D Platform
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {registered && (
-            <p className="text-sm text-green-600 text-center mb-4">
-              Реєстрацію успішно завершено! Тепер можеш увійти.
-            </p>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 p-4">
+      <div className="w-full max-w-sm space-y-6">
+        <div className="text-center">
+          <div className="text-6xl mb-3">🐉</div>
+          <h1 className="text-2xl font-bold text-white">Гримуар Дракона</h1>
+          <p className="text-slate-400 text-sm mt-1">
+            D&D 5e Інформаційна платформа
+          </p>
+        </div>
+
+        <Card className="border-slate-800 bg-slate-900/80 backdrop-blur">
+          <CardHeader className="pb-2 pt-6">
+            <h2 className="text-lg font-semibold text-white text-center">
+              Вхід до системи
+            </h2>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label className="text-slate-300">Email</Label>
               <Input
-                id="email"
                 type="email"
-                placeholder="example@email.com"
-                value={formData.email}
+                placeholder="your@email.com"
+                value={form.email}
                 onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
+                  setForm((p) => ({ ...p, email: e.target.value }))
                 }
-                required
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Пароль</Label>
+              <Label className="text-slate-300">Пароль</Label>
               <Input
-                id="password"
                 type="password"
-                placeholder="Твій пароль"
-                value={formData.password}
+                placeholder="••••••••"
+                value={form.password}
                 onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
+                  setForm((p) => ({ ...p, password: e.target.value }))
                 }
-                required
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                className="bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
               />
             </div>
             {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
+              <p className="text-red-400 text-sm text-center">{error}</p>
             )}
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button
+              className="w-full bg-red-700 hover:bg-red-600 text-white"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
               {loading ? 'Вхід...' : 'Увійти'}
             </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Ще немає акаунту?{' '}
-              <Link href="/register" className="underline hover:text-primary">
-                Зареєструватись
+            <p className="text-center text-sm text-slate-400">
+              Немає акаунту?{' '}
+              <Link
+                href="/register"
+                className="text-red-400 hover:text-red-300 underline"
+              >
+                Зареєструватися
               </Link>
             </p>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }
