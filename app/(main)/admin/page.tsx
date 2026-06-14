@@ -41,6 +41,13 @@ const TRANSLATE_TYPES = [
   { type: 'monsters', label: 'Монстри' },
   { type: 'spells', label: 'Заклинання' },
   { type: 'races', label: 'Раси' },
+  { type: 'classes', label: 'Класи' },
+  { type: 'backgrounds', label: 'Передісторії' },
+  { type: 'feats', label: 'Здібності' },
+  { type: 'magic-items', label: 'Магічні предмети' },
+  { type: 'conditions', label: 'Стани' },
+  { type: 'equipment', label: 'Спорядження' },
+  { type: 'sections', label: 'Правила' },
 ]
 
 const CONTENT_TYPES = [
@@ -137,6 +144,29 @@ export default function AdminPage() {
       fetchStats()
     } catch (err: any) {
       addLog(err.message, undefined, true)
+    }
+  }
+
+  const handleTranslate = async (id: string) => {
+    setLoading(`translate-item-${id}`)
+    try {
+      const res = await fetch('/api/admin/translate-one', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: selectedType.key, id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setItems((prev) =>
+        prev.map((item) =>
+          item._id === id ? { ...item, name_uk: data.name_uk } : item,
+        ),
+      )
+      addLog(`✅ Перекладено: ${data.name_uk}`)
+    } catch (err: any) {
+      addLog(`❌ ${err.message}`, undefined, true)
+    } finally {
+      setLoading(null)
     }
   }
 
@@ -447,6 +477,42 @@ export default function AdminPage() {
                           не перекладено
                         </span>
                       )}
+                      <div className="flex items-center gap-2 shrink-0">
+                        {!item.name_uk && (
+                          <span className="text-xs text-orange-500">
+                            не перекладено
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleTranslate(item._id)}
+                          disabled={loading !== null}
+                          className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-blue-400 hover:border-blue-800 disabled:opacity-40 transition-colors"
+                        >
+                          {loading === `translate-item-${item._id}`
+                            ? '⏳'
+                            : '🌐'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item._id)}
+                          className={`text-xs px-2 py-1 rounded border transition-colors ${
+                            deleteConfirm === item._id
+                              ? 'bg-red-800 border-red-700 text-white'
+                              : 'border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-800'
+                          }`}
+                        >
+                          {deleteConfirm === item._id
+                            ? 'Підтвердити'
+                            : 'Видалити'}
+                        </button>
+                        {deleteConfirm === item._id && (
+                          <button
+                            onClick={() => setDeleteConfirm(null)}
+                            className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-white"
+                          >
+                            Скасувати
+                          </button>
+                        )}
+                      </div>
                       <button
                         onClick={() => handleDelete(item._id)}
                         className={`text-xs px-2 py-1 rounded border transition-colors ${

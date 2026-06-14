@@ -251,3 +251,237 @@ ${JSON.stringify({
 
   return await generateJSON(prompt)
 }
+
+export async function translateClass(cls: {
+  name_en: string
+  desc: string
+  hit_dice: string
+  hp_at_1st_level: string
+  hp_at_higher_levels: string
+  prof_armor: string
+  prof_weapons: string
+  prof_tools: string
+  prof_saving_throws: string
+  prof_skills: string
+  equipment: string
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: cls.name_en,
+  desc_uk: cls.desc,
+  hp_at_1st_level_uk: cls.hp_at_1st_level,
+  hp_at_higher_levels_uk: cls.hp_at_higher_levels,
+  prof_armor_uk: cls.prof_armor,
+  prof_weapons_uk: cls.prof_weapons,
+  prof_tools_uk: cls.prof_tools,
+  prof_saving_throws_uk: cls.prof_saving_throws,
+  prof_skills_uk: cls.prof_skills,
+  equipment_uk: cls.equipment,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай ігрові механіки (DC, кидки кубиків, числа) без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
+
+export async function translateBackground(bg: {
+  name_en: string
+  desc: string
+  skill_proficiencies: string
+  tool_proficiencies: string
+  languages: string
+  equipment: string
+  feature: string
+  feature_desc: string
+  suggested_characteristics: string
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: bg.name_en,
+  desc_uk: bg.desc,
+  skill_proficiencies_uk: bg.skill_proficiencies,
+  tool_proficiencies_uk: bg.tool_proficiencies,
+  languages_uk: bg.languages,
+  equipment_uk: bg.equipment,
+  feature_uk: bg.feature,
+  feature_desc_uk: bg.feature_desc,
+  suggested_characteristics_uk: bg.suggested_characteristics,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай Markdown форматування таблиць
+- Зберігай ігрові механіки (DC, кидки кубиків, числа) без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
+
+export async function translateFeat(feat: {
+  name_en: string
+  desc: string
+  prerequisite: string
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: feat.name_en,
+  desc_uk: feat.desc,
+  prerequisite_uk: feat.prerequisite,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай ігрові механіки (DC, кидки кубиків, числа) без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
+
+export async function translateMagicItem(item: {
+  name_en: string
+  desc: string
+  type: string
+  rarity: string
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Додатковий глосарій рідкісності:
+- Common → Звичайний
+- Uncommon → Незвичайний
+- Rare → Рідкісний
+- Very Rare → Дуже рідкісний
+- Legendary → Легендарний
+- Artifact → Артефакт
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: item.name_en,
+  desc_uk: item.desc,
+  type_uk: item.type,
+  rarity_uk: item.rarity,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай ігрові механіки (DC, кидки кубиків, числа) без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
+
+export async function translateCondition(condition: {
+  name_en: string
+  desc_en: string
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: condition.name_en,
+  desc_uk: condition.desc_en,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай ігрові механіки без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
+
+export async function translateEquipment(item: {
+  name_en: string
+  desc_en: string
+  damage_type: string
+  properties: string[]
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Додатковий глосарій зброї:
+- Slashing → Ріжуче
+- Piercing → Колюче
+- Bludgeoning → Дробляче
+- Finesse → Витонченість
+- Light → Легка
+- Heavy → Важка
+- Thrown → Метальна
+- Reach → Досяжність
+- Versatile → Універсальна
+- Two-Handed → Дворучна
+- Loading → Зарядна
+- Ammunition → Боєприпаси
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: item.name_en,
+  desc_uk: item.desc_en,
+  damage_type_uk: item.damage_type,
+  properties_uk: item.properties,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- properties_uk має бути масивом рядків
+- Зберігай ігрові механіки без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
+
+export async function translateSection(section: {
+  name_en: string
+  desc_en: string
+}) {
+  const prompt = `
+Ти — перекладач настільно-рольової гри Dungeons & Dragons.
+Перекладай з англійської на українську мову.
+${GLOSSARY}
+
+Переклади наступний JSON:
+
+${JSON.stringify({
+  name_uk: section.name_en,
+  desc_uk: section.desc_en,
+})}
+
+Правила:
+- Переклади всі текстові поля
+- Зберігай Markdown форматування таблиць та заголовків
+- Зберігай ігрові механіки без змін
+- Повертай ТІЛЬКИ валідний JSON
+`
+  return await generateJSON(prompt)
+}
