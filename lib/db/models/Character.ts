@@ -33,6 +33,14 @@ export interface ICharacter extends Document {
   }[]
   spells: mongoose.Types.ObjectId[]
   notes: string
+  saving_throws: {
+    strength: boolean
+    dexterity: boolean
+    constitution: boolean
+    intelligence: boolean
+    wisdom: boolean
+    charisma: boolean
+  }
 }
 
 const CharacterSchema = new Schema<ICharacter>(
@@ -77,6 +85,14 @@ const CharacterSchema = new Schema<ICharacter>(
     ],
     spells: [{ type: Schema.Types.ObjectId, ref: 'Spell' }],
     notes: { type: String, default: '' },
+    saving_throws: {
+      strength: { type: Boolean, default: false },
+      dexterity: { type: Boolean, default: false },
+      constitution: { type: Boolean, default: false },
+      intelligence: { type: Boolean, default: false },
+      wisdom: { type: Boolean, default: false },
+      charisma: { type: Boolean, default: false },
+    },
   },
   { timestamps: true },
 )

@@ -44,6 +44,9 @@ function modifier(val: number) {
 function modNum(val: number) {
   return Math.floor((val - 10) / 2)
 }
+function proficiencyBonus(level: number) {
+  return Math.ceil(level / 4) + 1
+}
 
 export default function CharacterSheetPage() {
   const { id } = useParams()
@@ -101,11 +104,12 @@ export default function CharacterSheetPage() {
     'wisdom',
     'charisma',
   ]
+  const profBonus = proficiencyBonus(c.level)
+
   const skillList = DEFAULT_SKILLS.map((skillName) => {
     const saved = c.skills?.find((s: any) => s.name === skillName)
     const abilityKey = SKILL_ABILITY[skillName]
     const abilityVal = c[abilityKey] ?? 10
-    const profBonus = c.proficiency_bonus ?? 2
     const isProficient = saved?.proficient ?? false
     const isExpertise = saved?.expertise ?? false
     const bonus =
@@ -163,7 +167,7 @@ export default function CharacterSheetPage() {
         {[
           { label: 'Клас обладунку', value: c.armor_class },
           { label: 'Швидкість', value: `${c.speed} фут.` },
-          { label: 'Бонус майстерності', value: `+${c.proficiency_bonus}` },
+          { label: 'Бонус майстерності', value: `+${profBonus}` },
           { label: 'Досвід', value: c.experience_points },
         ].map((stat) => (
           <div key={stat.label} className={`${cardClass} text-center`}>
@@ -194,8 +198,8 @@ export default function CharacterSheetPage() {
             value={hpDelta}
             onChange={(e) => setHpDelta(e.target.value)}
             placeholder="0"
-            className="w-20 h-9 rounded-md border border-slate-700 bg-slate-800 text-white px-3 text-sm"
             min="0"
+            className="w-20 h-9 rounded-md border border-slate-700 bg-slate-800 text-white px-3 text-sm"
           />
           <button
             onClick={() => applyDelta(1)}
@@ -218,25 +222,54 @@ export default function CharacterSheetPage() {
         </div>
       </div>
 
+      {/* Характеристики */}
+      <div className={cardClass}>
+        <h2 className="text-base font-semibold text-white mb-3">
+          Характеристики
+        </h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {abilities.map((ab) => (
+            <div
+              key={ab}
+              className="text-center rounded-lg border border-slate-700 bg-slate-800/50 p-3"
+            >
+              <div className="text-xs font-medium text-slate-500 mb-1">
+                {ABILITY_LABELS[ab]}
+              </div>
+              <div className="text-2xl font-bold text-white">{c[ab]}</div>
+              <div className="text-sm text-slate-400">{modifier(c[ab])}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Характеристики */}
+        {/* Рятівні кидки */}
         <div className={cardClass}>
           <h2 className="text-base font-semibold text-white mb-3">
-            Характеристики
+            Рятівні кидки
           </h2>
-          <div className="grid grid-cols-3 gap-3">
-            {abilities.map((ab) => (
-              <div
-                key={ab}
-                className="text-center rounded-lg border border-slate-700 bg-slate-800/50 p-3"
-              >
-                <div className="text-xs font-medium text-slate-500 mb-1">
-                  {ABILITY_LABELS[ab]}
+          <div className="space-y-1">
+            {abilities.map((ab) => {
+              const isProficient = c.saving_throws?.[ab] ?? false
+              const bonus = modNum(c[ab] ?? 10) + (isProficient ? profBonus : 0)
+              return (
+                <div
+                  key={ab}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${isProficient ? 'bg-red-400' : 'bg-slate-700'}`}
+                    />
+                    <span className="text-slate-300">{ABILITY_LABELS[ab]}</span>
+                  </div>
+                  <span className="font-medium tabular-nums text-white">
+                    {bonus >= 0 ? `+${bonus}` : bonus}
+                  </span>
                 </div>
-                <div className="text-2xl font-bold text-white">{c[ab]}</div>
-                <div className="text-sm text-slate-400">{modifier(c[ab])}</div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -251,7 +284,7 @@ export default function CharacterSheetPage() {
               >
                 <div className="flex items-center gap-2">
                   <span
-                    className={`w-2 h-2 rounded-full shrink-0 ${skill.isExpertise ? 'bg-red-400' : skill.isProficient ? 'bg-slate-400' : 'bg-slate-700'}`}
+                    className={`w-2 h-2 rounded-full shrink-0 ${skill.isExpertise ? 'bg-yellow-400' : skill.isProficient ? 'bg-red-400' : 'bg-slate-700'}`}
                   />
                   <span className="text-slate-300">{skill.name}</span>
                   <span className="text-xs text-slate-600">

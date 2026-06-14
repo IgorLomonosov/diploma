@@ -139,11 +139,11 @@ export default async function DashboardPage() {
     <div className="space-y-10">
       {/* Банер */}
       <div className="relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900/60 p-8">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent" />
         <div className="relative">
           <p className="text-slate-400 text-sm mb-1">Вітаємо у</p>
           <h1 className="text-4xl font-bold text-white mb-2">
-            Гримуарі Дракона 🐉
+            Гримуар Дракона 🐉
           </h1>
           <p className="text-slate-300">
             Привіт,{' '}

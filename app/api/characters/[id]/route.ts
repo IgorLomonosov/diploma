@@ -40,19 +40,36 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = await params
     const session = await auth()
     if (!session) {
       return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await req.json()
-
     await connectDB()
+
+    const { saving_throws, ...rest } = body
+
+    const updateData: any = { $set: { ...rest } }
+
+    if (saving_throws) {
+      updateData.$set['saving_throws.strength'] =
+        saving_throws.strength ?? false
+      updateData.$set['saving_throws.dexterity'] =
+        saving_throws.dexterity ?? false
+      updateData.$set['saving_throws.constitution'] =
+        saving_throws.constitution ?? false
+      updateData.$set['saving_throws.intelligence'] =
+        saving_throws.intelligence ?? false
+      updateData.$set['saving_throws.wisdom'] = saving_throws.wisdom ?? false
+      updateData.$set['saving_throws.charisma'] =
+        saving_throws.charisma ?? false
+    }
 
     const character = await Character.findOneAndUpdate(
       { _id: id, user_id: session.user.id },
-      { $set: body },
+      updateData,
       { new: true },
     )
 

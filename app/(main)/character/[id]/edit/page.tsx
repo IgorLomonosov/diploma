@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 const ALIGNMENTS = [
   'Законно-добрий',
@@ -14,15 +14,6 @@ const ALIGNMENTS = [
   'Нейтрально-злий',
   'Хаотично-злий',
 ]
-
-const DEFAULT_STATS = {
-  strength: 10,
-  dexterity: 10,
-  constitution: 10,
-  intelligence: 10,
-  wisdom: 10,
-  charisma: 10,
-}
 
 const DEFAULT_SKILLS_STATE = [
   { name: 'Акробатика', ability: 'СПР', proficient: false, expertise: false },
@@ -109,14 +100,15 @@ function proficiencyBonus(level: number) {
   return Math.ceil(level / 4) + 1
 }
 
-export default function NewCharacterPage() {
+export default function EditCharacterPage() {
   const router = useRouter()
+  const { id } = useParams()
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
   const [error, setError] = useState('')
   const [races, setRaces] = useState<Option[]>([])
   const [classes, setClasses] = useState<Option[]>([])
   const [backgrounds, setBackgrounds] = useState<Option[]>([])
-  const [optionsLoading, setOptionsLoading] = useState(true)
   const [skills, setSkills] = useState(DEFAULT_SKILLS_STATE)
   const [savingThrows, setSavingThrows] = useState(DEFAULT_SAVING_THROWS)
 
@@ -128,7 +120,12 @@ export default function NewCharacterPage() {
     background: '',
     alignment: '',
     experience_points: 0,
-    ...DEFAULT_STATS,
+    strength: 10,
+    dexterity: 10,
+    constitution: 10,
+    intelligence: 10,
+    wisdom: 10,
+    charisma: 10,
     max_hit_points: 8,
     current_hit_points: 8,
     armor_class: 10,
@@ -137,18 +134,71 @@ export default function NewCharacterPage() {
   })
 
   useEffect(() => {
-    const fetchOptions = async () => {
+    const fetchData = async () => {
       try {
-        const [racesRes, classesRes, bgsRes] = await Promise.all([
+        const [charRes, racesRes, classesRes, bgsRes] = await Promise.all([
+          fetch(`/api/characters/${id}`),
           fetch('/api/races?limit=100'),
           fetch('/api/classes?limit=100'),
           fetch('/api/backgrounds?limit=100'),
         ])
-        const [racesData, classesData, bgsData] = await Promise.all([
+        const [charData, racesData, classesData, bgsData] = await Promise.all([
+          charRes.json(),
           racesRes.json(),
           classesRes.json(),
           bgsRes.json(),
         ])
+
+        if (charData.data) {
+          const c = charData.data
+          setForm({
+            name: c.name || '',
+            race: c.race || '',
+            class: c.class || '',
+            level: c.level || 1,
+            background: c.background || '',
+            alignment: c.alignment || '',
+            experience_points: c.experience_points || 0,
+            strength: c.strength || 10,
+            dexterity: c.dexterity || 10,
+            constitution: c.constitution || 10,
+            intelligence: c.intelligence || 10,
+            wisdom: c.wisdom || 10,
+            charisma: c.charisma || 10,
+            max_hit_points: c.max_hit_points || 8,
+            current_hit_points: c.current_hit_points || 8,
+            armor_class: c.armor_class || 10,
+            speed: c.speed || 30,
+            notes: c.notes || '',
+          })
+
+          if (c.skills?.length > 0) {
+            setSkills((prev) =>
+              prev.map((skill) => {
+                const saved = c.skills.find((s: any) => s.name === skill.name)
+                return saved
+                  ? {
+                      ...skill,
+                      proficient: saved.proficient,
+                      expertise: saved.expertise,
+                    }
+                  : skill
+              }),
+            )
+          }
+
+          if (c.saving_throws) {
+            setSavingThrows({
+              strength: c.saving_throws.strength ?? false,
+              dexterity: c.saving_throws.dexterity ?? false,
+              constitution: c.saving_throws.constitution ?? false,
+              intelligence: c.saving_throws.intelligence ?? false,
+              wisdom: c.saving_throws.wisdom ?? false,
+              charisma: c.saving_throws.charisma ?? false,
+            })
+          }
+        }
+
         setRaces(
           (racesData.data || []).map((r: any) => ({
             value: r.name_uk || r.name_en,
@@ -168,13 +218,13 @@ export default function NewCharacterPage() {
           })),
         )
       } catch (err) {
-        console.error(err)
+        setError('Помилка завантаження даних')
       } finally {
-        setOptionsLoading(false)
+        setFetching(false)
       }
     }
-    fetchOptions()
-  }, [])
+    fetchData()
+  }, [id])
 
   const update = (field: string, value: string | number) =>
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -211,8 +261,8 @@ export default function NewCharacterPage() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/characters', {
-        method: 'POST',
+      const res = await fetch(`/api/characters/${id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
@@ -229,7 +279,7 @@ export default function NewCharacterPage() {
         setError(data.error)
         return
       }
-      router.push(`/character/${data.data._id}`)
+      router.push(`/character/${id}`)
     } catch {
       setError('Щось пішло не так')
     } finally {
@@ -248,9 +298,29 @@ export default function NewCharacterPage() {
 
   const profBonus = proficiencyBonus(form.level)
 
+  if (fetching)
+    return (
+      <div className="max-w-3xl mx-auto space-y-5">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-40 rounded-xl bg-slate-800/50 animate-pulse"
+          />
+        ))}
+      </div>
+    )
+
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      <h1 className="text-3xl font-bold text-white">Новий персонаж</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Редагування персонажа</h1>
+        <button
+          onClick={() => router.push(`/character/${id}`)}
+          className="px-3 py-1.5 text-sm rounded-md border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+        >
+          ← Назад
+        </button>
+      </div>
 
       {/* Основна інформація */}
       <div className={cardClass}>
@@ -273,11 +343,8 @@ export default function NewCharacterPage() {
               value={form.race}
               onChange={(e) => update('race', e.target.value)}
               className={selectClass}
-              disabled={optionsLoading}
             >
-              <option value="">
-                {optionsLoading ? 'Завантаження...' : 'Обери расу'}
-              </option>
+              <option value="">Обери расу</option>
               {races.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
@@ -291,11 +358,8 @@ export default function NewCharacterPage() {
               value={form.class}
               onChange={(e) => update('class', e.target.value)}
               className={selectClass}
-              disabled={optionsLoading}
             >
-              <option value="">
-                {optionsLoading ? 'Завантаження...' : 'Обери клас'}
-              </option>
+              <option value="">Обери клас</option>
               {classes.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
@@ -315,16 +379,25 @@ export default function NewCharacterPage() {
             />
           </div>
           <div>
+            <label className={labelClass}>Досвід</label>
+            <input
+              type="number"
+              min={0}
+              value={form.experience_points}
+              onChange={(e) =>
+                update('experience_points', parseInt(e.target.value))
+              }
+              className={inputClass}
+            />
+          </div>
+          <div>
             <label className={labelClass}>Передісторія</label>
             <select
               value={form.background}
               onChange={(e) => update('background', e.target.value)}
               className={selectClass}
-              disabled={optionsLoading}
             >
-              <option value="">
-                {optionsLoading ? 'Завантаження...' : 'Обери передісторію'}
-              </option>
+              <option value="">Обери передісторію</option>
               {backgrounds.map((b) => (
                 <option key={b.value} value={b.value}>
                   {b.label}
@@ -502,7 +575,7 @@ export default function NewCharacterPage() {
 
       <div className="flex gap-3 justify-end">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push(`/character/${id}`)}
           className="px-4 py-2 text-sm rounded-md border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
         >
           Скасувати
@@ -512,7 +585,7 @@ export default function NewCharacterPage() {
           disabled={loading}
           className="px-4 py-2 text-sm rounded-md bg-red-800 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-50"
         >
-          {loading ? 'Збереження...' : 'Створити персонажа'}
+          {loading ? 'Збереження...' : 'Зберегти зміни'}
         </button>
       </div>
     </div>
