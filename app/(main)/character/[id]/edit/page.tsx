@@ -406,13 +406,13 @@ export default function EditCharacterPage() {
             </select>
           </div>
           <div>
-            <label className={labelClass}>Мировозрення</label>
+            <label className={labelClass}>Світогляд</label>
             <select
               value={form.alignment}
               onChange={(e) => update('alignment', e.target.value)}
               className={selectClass}
             >
-              <option value="">Обери мировозрення</option>
+              <option value="">Обери Світогляд</option>
               {ALIGNMENTS.map((a) => (
                 <option key={a} value={a}>
                   {a}

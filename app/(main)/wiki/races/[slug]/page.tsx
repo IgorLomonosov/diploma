@@ -58,7 +58,7 @@ export default async function RacePage({ params }: Props) {
         { title: 'Мови', en: r.languages, uk: r.languages_uk },
         { title: 'Зір', en: r.vision, uk: r.vision_uk },
         { title: 'Вік', en: r.age, uk: r.age_uk },
-        { title: 'Мировозрення', en: r.alignment, uk: r.alignment_uk },
+        { title: 'Світогляд', en: r.alignment, uk: r.alignment_uk },
         { title: 'Расові риси', en: r.traits, uk: r.traits_uk },
       ]
         .filter((s) => s.en || s.uk)

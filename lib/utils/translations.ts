@@ -47,12 +47,12 @@ export const ALIGNMENT_UK: Record<string, string> = {
   'lawful evil': 'законно-злий',
   'neutral evil': 'нейтрально-злий',
   'chaotic evil': 'хаотично-злий',
-  unaligned: 'без мировозрення',
-  'any alignment': 'будь-яке мировозрення',
-  'any evil alignment': 'будь-яке злий мировозрення',
-  'any non-good alignment': 'будь-яке не добре мировозрення',
-  'any non-lawful alignment': 'будь-яке не законне мировозрення',
-  'any chaotic alignment': 'будь-яке хаотичне мировозрення',
+  unaligned: 'без Світогляд',
+  'any alignment': 'будь-яке Світогляд',
+  'any evil alignment': 'будь-яке злий Світогляд',
+  'any non-good alignment': 'будь-яке не добре Світогляд',
+  'any non-lawful alignment': 'будь-яке не законне Світогляд',
+  'any chaotic alignment': 'будь-яке хаотичне Світогляд',
 }
 
 export const CASTING_TIME_UK: Record<string, string> = {

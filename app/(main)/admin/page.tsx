@@ -477,42 +477,15 @@ export default function AdminPage() {
                           не перекладено
                         </span>
                       )}
-                      <div className="flex items-center gap-2 shrink-0">
-                        {!item.name_uk && (
-                          <span className="text-xs text-orange-500">
-                            не перекладено
-                          </span>
-                        )}
-                        <button
-                          onClick={() => handleTranslate(item._id)}
-                          disabled={loading !== null}
-                          className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-blue-400 hover:border-blue-800 disabled:opacity-40 transition-colors"
-                        >
-                          {loading === `translate-item-${item._id}`
-                            ? '⏳'
-                            : '🌐'}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item._id)}
-                          className={`text-xs px-2 py-1 rounded border transition-colors ${
-                            deleteConfirm === item._id
-                              ? 'bg-red-800 border-red-700 text-white'
-                              : 'border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-800'
-                          }`}
-                        >
-                          {deleteConfirm === item._id
-                            ? 'Підтвердити'
-                            : 'Видалити'}
-                        </button>
-                        {deleteConfirm === item._id && (
-                          <button
-                            onClick={() => setDeleteConfirm(null)}
-                            className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-white"
-                          >
-                            Скасувати
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => handleTranslate(item._id)}
+                        disabled={loading !== null}
+                        className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-blue-400 hover:border-blue-800 disabled:opacity-40 transition-colors"
+                      >
+                        {loading === `translate-item-${item._id}`
+                          ? 'Переклад... '
+                          : 'Перекласти '}
+                      </button>
                       <button
                         onClick={() => handleDelete(item._id)}
                         className={`text-xs px-2 py-1 rounded border transition-colors ${

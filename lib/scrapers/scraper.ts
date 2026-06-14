@@ -37,7 +37,6 @@ export interface ScraperResult {
   total: number
 }
 
-// Перетворення монстра з Open5e формату в наш формат
 function transformMonster(raw: Open5eMonster) {
   const speedStr =
     typeof raw.speed === 'object' && raw.speed !== null
@@ -48,7 +47,6 @@ function transformMonster(raw: Open5eMonster) {
 
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     size: raw.size || '',
     type: raw.type || '',
@@ -99,7 +97,6 @@ function transformMonster(raw: Open5eMonster) {
     xp: raw.xp ?? 0,
     img_main: raw.img_main || '',
     description_en: raw.desc || '',
-    description_uk: '',
     actions: (raw.actions || []).map((a) => ({
       name: a.name,
       description: a.desc,
@@ -123,11 +120,9 @@ function transformMonster(raw: Open5eMonster) {
   }
 }
 
-// Перетворення заклинання з Open5e формату в наш формат
 function transformSpell(raw: Open5eSpell) {
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     level: raw.level_int || 0,
     school: raw.school || '',
@@ -140,8 +135,6 @@ function transformSpell(raw: Open5eSpell) {
     ritual: raw.ritual === 'yes',
     description_en: raw.desc || '',
     higher_levels_en: raw.higher_level || '',
-    description_uk: '',
-    higher_levels_uk: '',
     classes: raw.dnd_class ? raw.dnd_class.split(',').map((c) => c.trim()) : [],
     document_slug: raw.document__slug || '',
     document_title: raw.document__title || '',
@@ -157,39 +150,24 @@ function transformRace(raw: Open5eRace) {
 
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     desc: raw.desc || '',
-    desc_uk: '',
     asi_desc: raw.asi_desc || '',
-    asi_desc_uk: '',
     size: raw.size || '',
     size_raw: raw.size_raw || '',
-    size_uk: '',
-    size_description: '',
-    size_description_uk: '',
     speed: speedVal,
     speed_desc: raw.speed_desc || '',
-    speed_desc_uk: '',
     ability_score_increases: raw.asi_desc || '',
     age: raw.age || '',
-    age_uk: '',
     alignment: raw.alignment || '',
-    alignment_uk: '',
     languages: raw.languages || '',
-    languages_uk: '',
     vision: raw.vision || '',
     traits: typeof raw.traits === 'string' ? raw.traits : '',
-    traits_uk: '',
     subraces: (raw.subraces || []).map((s) => ({
       name: s.name,
-      name_uk: '',
       desc: s.desc || '',
-      desc_uk: '',
       asi_desc: s.asi_desc || '',
-      asi_desc_uk: '',
       traits: s.traits || '',
-      traits_uk: '',
     })),
     document_slug: raw.document__slug || '',
     document_title: raw.document__title || '',
@@ -200,27 +178,17 @@ function transformRace(raw: Open5eRace) {
 function transformClass(raw: Open5eClass) {
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     hit_dice: raw.hit_dice || '',
     hp_at_1st_level: raw.hp_at_1st_level || '',
-    hp_at_1st_level_uk: '',
     hp_at_higher_levels: raw.hp_at_higher_levels || '',
-    hp_at_higher_levels_uk: '',
     prof_armor: raw.prof_armor || '',
-    prof_armor_uk: '',
     prof_weapons: raw.prof_weapons || '',
-    prof_weapons_uk: '',
     prof_tools: raw.prof_tools || '',
-    prof_tools_uk: '',
     prof_saving_throws: raw.prof_saving_throws || '',
-    prof_saving_throws_uk: '',
     prof_skills: raw.prof_skills || '',
-    prof_skills_uk: '',
     equipment: raw.equipment || '',
-    equipment_uk: '',
     desc: raw.desc || '',
-    desc_uk: '',
     spell_casting_ability: raw.spell_casting_ability || '',
     subtypes_name: raw.subtypes_name || '',
     document_slug: raw.document__slug || '',
@@ -232,24 +200,15 @@ function transformClass(raw: Open5eClass) {
 function transformBackground(raw: Open5eBackground) {
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     desc: raw.desc || '',
-    desc_uk: '',
     skill_proficiencies: raw.skill_proficiencies || '',
-    skill_proficiencies_uk: '',
     tool_proficiencies: raw.tool_proficiencies || '',
-    tool_proficiencies_uk: '',
     languages: raw.languages || '',
-    languages_uk: '',
     equipment: raw.equipment || '',
-    equipment_uk: '',
     feature: raw.feature || '',
-    feature_uk: '',
     feature_desc: raw.feature_desc || '',
-    feature_desc_uk: '',
     suggested_characteristics: raw.suggested_characteristics || '',
-    suggested_characteristics_uk: '',
     document_slug: raw.document__slug || '',
     document_title: raw.document__title || '',
     source: raw.document__slug || 'open5e',
@@ -261,15 +220,11 @@ function transformFeat(raw: Open5eFeat) {
     ? '\n\n' +
       ((raw as any).effects_desc as string[]).map((e) => `- ${e}`).join('\n')
     : ''
-
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     desc: (raw.desc || '') + effectsText,
-    desc_uk: '',
     prerequisite: raw.prerequisite || '',
-    prerequisite_uk: '',
     document_slug: raw.document__slug || '',
     document_title: raw.document__title || '',
     source: raw.document__slug || 'open5e',
@@ -279,54 +234,56 @@ function transformFeat(raw: Open5eFeat) {
 function transformMagicItem(raw: Open5eMagicItem) {
   return {
     name_en: raw.name,
-    name_uk: '',
     slug: raw.slug,
     type: raw.type || '',
-    type_uk: '',
     rarity: raw.rarity || '',
-    rarity_uk: '',
     requires_attunement: raw.requires_attunement || '',
     desc: raw.desc || '',
-    desc_uk: '',
     document_slug: raw.document__slug || '',
     document_title: raw.document__title || '',
     source: raw.document__slug || 'open5e',
   }
 }
 
-// Скрапінг монстрів
 export async function scrapeMonsters(
   maxPages = 5,
   document = '',
 ): Promise<ScraperResult> {
   await connectDB()
-
-  const result: ScraperResult = {
-    success: 0,
-    skipped: 0,
-    errors: 0,
-    total: 0,
-  }
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
 
   for (let page = 1; page <= maxPages; page++) {
     try {
       console.log(`Scraping monsters page ${page}/${maxPages}...`)
       const data = await fetchMonsters(page, 20, document)
-
       if (!data.results || data.results.length === 0) break
-
       result.total += data.results.length
 
       for (const raw of data.results) {
         try {
           const monster = transformMonster(raw as Open5eMonster)
-
           await Monster.findOneAndUpdate(
             { slug: monster.slug },
-            { $set: monster },
+            {
+              $set: monster,
+              $setOnInsert: {
+                name_uk: '',
+                description_uk: '',
+                size_uk: '',
+                type_uk: '',
+                alignment_uk: '',
+                skills_uk: '',
+                senses_uk: '',
+                languages_uk: '',
+                speed_uk: '',
+                armor_desc_uk: '',
+                damage_resistances_uk: '',
+                damage_immunities_uk: '',
+                condition_immunities_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
-
           result.success++
         } catch (err) {
           console.error(`Error saving monster ${raw.slug}:`, err)
@@ -342,42 +299,43 @@ export async function scrapeMonsters(
       break
     }
   }
-
   return result
 }
 
-// Скрапінг заклинань
 export async function scrapeSpells(
   maxPages = 5,
   document = '',
 ): Promise<ScraperResult> {
   await connectDB()
-
-  const result: ScraperResult = {
-    success: 0,
-    skipped: 0,
-    errors: 0,
-    total: 0,
-  }
+  const result: ScraperResult = { success: 0, skipped: 0, errors: 0, total: 0 }
 
   for (let page = 1; page <= maxPages; page++) {
     try {
       console.log(`Scraping spells page ${page}/${maxPages}...`)
       const data = await fetchSpells(page, 20, document)
       if (!data.results || data.results.length === 0) break
-
       result.total += data.results.length
 
       for (const raw of data.results) {
         try {
           const spell = transformSpell(raw as Open5eSpell)
-
           await Spell.findOneAndUpdate(
             { slug: spell.slug },
-            { $set: spell },
+            {
+              $set: spell,
+              $setOnInsert: {
+                name_uk: '',
+                school_uk: '',
+                casting_time_uk: '',
+                range_uk: '',
+                duration_uk: '',
+                components_uk: '',
+                description_uk: '',
+                higher_levels_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
-
           result.success++
         } catch (err) {
           console.error(`Error saving spell ${raw.slug}:`, err)
@@ -386,7 +344,6 @@ export async function scrapeSpells(
       }
 
       if (!data.next) break
-
       await new Promise((r) => setTimeout(r, 500))
     } catch (err) {
       console.error(`Error fetching spells page ${page}:`, err)
@@ -394,7 +351,6 @@ export async function scrapeSpells(
       break
     }
   }
-
   return result
 }
 
@@ -416,7 +372,21 @@ export async function scrapeRaces(
           const race = transformRace(raw as Open5eRace)
           await Race.findOneAndUpdate(
             { slug: race.slug },
-            { $set: race },
+            {
+              $set: race,
+              $setOnInsert: {
+                name_uk: '',
+                desc_uk: '',
+                asi_desc_uk: '',
+                age_uk: '',
+                alignment_uk: '',
+                size_uk: '',
+                speed_desc_uk: '',
+                languages_uk: '',
+                vision_uk: '',
+                traits_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
           result.success++
@@ -455,7 +425,21 @@ export async function scrapeClasses(
           const cls = transformClass(raw as Open5eClass)
           await Class.findOneAndUpdate(
             { slug: cls.slug },
-            { $set: cls },
+            {
+              $set: cls,
+              $setOnInsert: {
+                name_uk: '',
+                desc_uk: '',
+                hp_at_1st_level_uk: '',
+                hp_at_higher_levels_uk: '',
+                prof_armor_uk: '',
+                prof_weapons_uk: '',
+                prof_tools_uk: '',
+                prof_saving_throws_uk: '',
+                prof_skills_uk: '',
+                equipment_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
           result.success++
@@ -494,7 +478,20 @@ export async function scrapeBackgrounds(
           const bg = transformBackground(raw as Open5eBackground)
           await Background.findOneAndUpdate(
             { slug: bg.slug },
-            { $set: bg },
+            {
+              $set: bg,
+              $setOnInsert: {
+                name_uk: '',
+                desc_uk: '',
+                skill_proficiencies_uk: '',
+                tool_proficiencies_uk: '',
+                languages_uk: '',
+                equipment_uk: '',
+                feature_uk: '',
+                feature_desc_uk: '',
+                suggested_characteristics_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
           result.success++
@@ -533,7 +530,14 @@ export async function scrapeFeats(
           const feat = transformFeat(raw as Open5eFeat)
           await Feat.findOneAndUpdate(
             { slug: feat.slug },
-            { $set: feat },
+            {
+              $set: feat,
+              $setOnInsert: {
+                name_uk: '',
+                desc_uk: '',
+                prerequisite_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
           result.success++
@@ -572,7 +576,15 @@ export async function scrapeMagicItems(
           const item = transformMagicItem(raw as Open5eMagicItem)
           await MagicItem.findOneAndUpdate(
             { slug: item.slug },
-            { $set: item },
+            {
+              $set: item,
+              $setOnInsert: {
+                name_uk: '',
+                type_uk: '',
+                rarity_uk: '',
+                desc_uk: '',
+              },
+            },
             { upsert: true, new: true },
           )
           result.success++
@@ -603,13 +615,14 @@ export async function scrapeConditions() {
     await Condition.findOneAndUpdate(
       { slug: raw.slug },
       {
-        slug: raw.slug,
-        name_en: raw.name,
-        name_uk: '',
-        desc_en: raw.desc || '',
-        desc_uk: '',
-        document_slug: raw.document__slug || '',
-        document_title: raw.document__title || '',
+        $set: {
+          slug: raw.slug,
+          name_en: raw.name,
+          desc_en: raw.desc || '',
+          document_slug: raw.document__slug || '',
+          document_title: raw.document__title || '',
+        },
+        $setOnInsert: { name_uk: '', desc_uk: '' },
       },
       { upsert: true, new: true },
     )
@@ -623,52 +636,57 @@ export async function scrapeEquipment() {
   await connectDB()
   let upserted = 0
 
-  // Зброя
   const weaponsData = await fetchWeapons(100, 1)
   for (const raw of weaponsData.results || []) {
     await Equipment.findOneAndUpdate(
       { slug: raw.slug },
       {
-        slug: raw.slug,
-        name_en: raw.name,
-        name_uk: '',
-        category: 'weapon',
-        cost: raw.cost || '',
-        weight: raw.weight || '',
-        desc_en: raw.desc || '',
-        desc_uk: '',
-        damage_dice: raw.damage_dice || '',
-        damage_type: raw.damage_type || '',
-        properties: raw.properties || [],
-        weapon_range: raw.weapon_range || '',
-        document_slug: raw.document__slug || '',
-        document_title: raw.document__title || '',
+        $set: {
+          slug: raw.slug,
+          name_en: raw.name,
+          category: 'weapon',
+          cost: raw.cost || '',
+          weight: raw.weight || '',
+          desc_en: raw.desc || '',
+          damage_dice: raw.damage_dice || '',
+          damage_type: raw.damage_type || '',
+          properties: raw.properties || [],
+          weapon_range: raw.weapon_range || '',
+          document_slug: raw.document__slug || '',
+          document_title: raw.document__title || '',
+        },
+        $setOnInsert: {
+          name_uk: '',
+          desc_uk: '',
+          damage_type_uk: '',
+          properties_uk: [],
+        },
       },
       { upsert: true, new: true },
     )
     upserted++
   }
 
-  // Обладунки
   const armorData = await fetchArmor(100, 1)
   for (const raw of armorData.results || []) {
     await Equipment.findOneAndUpdate(
       { slug: `armor-${raw.slug}` },
       {
-        slug: `armor-${raw.slug}`,
-        name_en: raw.name,
-        name_uk: '',
-        category: 'armor',
-        cost: raw.cost || '',
-        weight: raw.weight || '',
-        desc_en: raw.desc || '',
-        desc_uk: '',
-        armor_class: raw.ac_string || '',
-        armor_category: raw.armor_category || '',
-        strength_requirement: raw.strength_requirement || 0,
-        stealth_disadvantage: raw.stealth_disadvantage || false,
-        document_slug: raw.document__slug || '',
-        document_title: raw.document__title || '',
+        $set: {
+          slug: `armor-${raw.slug}`,
+          name_en: raw.name,
+          category: 'armor',
+          cost: raw.cost || '',
+          weight: raw.weight || '',
+          desc_en: raw.desc || '',
+          armor_class: raw.ac_string || '',
+          armor_category: raw.armor_category || '',
+          strength_requirement: raw.strength_requirement || 0,
+          stealth_disadvantage: raw.stealth_disadvantage || false,
+          document_slug: raw.document__slug || '',
+          document_title: raw.document__title || '',
+        },
+        $setOnInsert: { name_uk: '', desc_uk: '' },
       },
       { upsert: true, new: true },
     )
@@ -691,14 +709,15 @@ export async function scrapeSections(maxPages = 5) {
       await Section.findOneAndUpdate(
         { slug: raw.slug },
         {
-          slug: raw.slug,
-          name_en: raw.name,
-          name_uk: '',
-          desc_en: raw.desc || '',
-          desc_uk: '',
-          parent: raw.parent || '',
-          document_slug: raw.document__slug || '',
-          document_title: raw.document__title || '',
+          $set: {
+            slug: raw.slug,
+            name_en: raw.name,
+            desc_en: raw.desc || '',
+            parent: raw.parent || '',
+            document_slug: raw.document__slug || '',
+            document_title: raw.document__title || '',
+          },
+          $setOnInsert: { name_uk: '', desc_uk: '' },
         },
         { upsert: true, new: true },
       )
