@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth()
 
-    if (!session || session.user.role !== 'moderator') {
+    const role = (session?.user as any)?.role
+
+    if (!session || !['moderator', 'admin'].includes(role)) {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
 

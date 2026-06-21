@@ -4,7 +4,7 @@ export interface IUser extends Document {
   username: string
   email: string
   password: string
-  role: 'player' | 'dm' | 'moderator'
+  role: 'player' | 'admin' | 'moderator'
   createdAt: Date
 }
 

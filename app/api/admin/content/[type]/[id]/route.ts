@@ -25,7 +25,9 @@ export async function DELETE(
 ) {
   try {
     const session = await auth()
-    if (!session || (session.user as any).role !== 'moderator') {
+    const role = (session?.user as any)?.role
+
+    if (!session || !['moderator', 'admin'].includes(role)) {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
 
@@ -56,7 +58,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth()
-    if (!session || (session.user as any).role !== 'moderator') {
+    if (!session || (session.user as any).role !== 'moderator' || 'admin') {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
 
