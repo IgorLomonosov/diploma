@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 
 interface Result {
@@ -22,6 +20,13 @@ interface ContentItem {
   name_en: string
   name_uk: string
   slug: string
+}
+interface UserItem {
+  _id: string
+  username: string
+  email: string
+  role: 'player' | 'moderator' | 'admin'
+  createdAt: string
 }
 
 const SCRAPE_TYPES = [
@@ -63,19 +68,28 @@ const CONTENT_TYPES = [
   { key: 'sections', label: 'Правила', api: '/api/sections' },
 ]
 
+const ROLE_LABELS: Record<string, string> = {
+  player: 'Гравець',
+  moderator: 'Модератор',
+  admin: 'Адміністратор',
+}
+
+const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
 const inputClass =
   'bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 h-9'
-const cardClass = 'rounded-xl border border-slate-700 bg-slate-900/60 p-5'
+const btnOutline =
+  'text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-40'
 
 export default function AdminPage() {
   const [loading, setLoading] = useState<string | null>(null)
   const [log, setLog] = useState<LogEntry[]>([])
   const [translateLimit, setTranslateLimit] = useState(10)
-  const [activeTab, setActiveTab] = useState<'scrape' | 'manage'>('scrape')
+  const [activeTab, setActiveTab] = useState<'scrape' | 'manage' | 'users'>(
+    'scrape',
+  )
   const [pages, setPages] = useState<Record<string, number>>(
     Object.fromEntries(SCRAPE_TYPES.map((t) => [t.type, t.defaultPages])),
   )
-
   const [selectedType, setSelectedType] = useState(CONTENT_TYPES[0])
   const [items, setItems] = useState<ContentItem[]>([])
   const [itemsLoading, setItemsLoading] = useState(false)
@@ -84,6 +98,9 @@ export default function AdminPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [stats, setStats] = useState<Record<string, number>>({})
+  const [users, setUsers] = useState<UserItem[]>([])
+  const [usersLoading, setUsersLoading] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const addLog = (message: string, result?: Result, error = false) => {
     const time = new Date().toLocaleTimeString('uk-UA')
@@ -107,7 +124,44 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchStats()
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.user?.role === 'admin') setIsAdmin(true)
+      })
   }, [fetchStats])
+
+  const fetchUsers = useCallback(async () => {
+    setUsersLoading(true)
+    try {
+      const res = await fetch('/api/admin/users')
+      const data = await res.json()
+      setUsers(data.data || [])
+    } catch {
+    } finally {
+      setUsersLoading(false)
+    }
+  }, [])
+
+  const changeRole = async (userId: string, role: string) => {
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === userId ? { ...u, role: data.data.role } : u,
+        ),
+      )
+      addLog(`Роль ${data.data.username} змінено на ${ROLE_LABELS[role]}`)
+    } catch (err: any) {
+      addLog(err.message, undefined, true)
+    }
+  }
 
   const fetchItems = useCallback(async () => {
     setItemsLoading(true)
@@ -162,9 +216,9 @@ export default function AdminPage() {
           item._id === id ? { ...item, name_uk: data.name_uk } : item,
         ),
       )
-      addLog(`✅ Перекладено: ${data.name_uk}`)
+      addLog(`Перекладено: ${data.name_uk}`)
     } catch (err: any) {
-      addLog(`❌ ${err.message}`, undefined, true)
+      addLog(err.message, undefined, true)
     } finally {
       setLoading(null)
     }
@@ -209,6 +263,12 @@ export default function AdminPage() {
     }
   }
 
+  const tabs = [
+    { key: 'scrape', label: 'Скрапінг і переклад' },
+    { key: 'manage', label: 'Управління контентом' },
+    ...(isAdmin ? [{ key: 'users', label: 'Користувачі' }] : []),
+  ]
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
@@ -233,13 +293,13 @@ export default function AdminPage() {
 
       {/* Таби */}
       <div className="flex gap-1 border-b border-slate-700">
-        {[
-          { key: 'scrape', label: 'Скрапінг і переклад' },
-          { key: 'manage', label: 'Управління контентом' },
-        ].map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
+            onClick={() => {
+              setActiveTab(tab.key as any)
+              if (tab.key === 'users') fetchUsers()
+            }}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.key
                 ? 'border-red-500 text-white'
@@ -251,9 +311,9 @@ export default function AdminPage() {
         ))}
       </div>
 
+      {/* Скрапінг і переклад */}
       {activeTab === 'scrape' && (
         <div className="space-y-5">
-          {/* Скрапінг */}
           <div className={cardClass}>
             <h2 className="text-base font-semibold text-white mb-4">
               Скрапінг контенту
@@ -280,23 +340,20 @@ export default function AdminPage() {
                       className="w-16 h-8 rounded border border-slate-700 bg-slate-800 text-white text-sm px-2"
                     />
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-8"
+                  <button
+                    className="text-xs px-3 py-1.5 rounded border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-40"
                     disabled={loading !== null}
                     onClick={() => runScrape(type)}
                   >
                     {loading === `scrape-${type}`
                       ? 'Завантаження...'
                       : 'Скрапити'}
-                  </Button>
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Переклад */}
           <div className={cardClass}>
             <h2 className="text-base font-semibold text-white mb-4">
               Переклад (Gemini AI)
@@ -323,23 +380,20 @@ export default function AdminPage() {
                   <span className="text-sm text-slate-300 w-40 shrink-0">
                     {label}
                   </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 h-8"
+                  <button
+                    className="text-xs px-3 py-1.5 rounded border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-40"
                     disabled={loading !== null}
                     onClick={() => runTranslate(type)}
                   >
                     {loading === `translate-${type}`
                       ? 'Переклад...'
                       : 'Перекласти'}
-                  </Button>
+                  </button>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Лог */}
           {log.length > 0 && (
             <div className={cardClass}>
               <div className="flex items-center justify-between mb-3">
@@ -372,21 +426,20 @@ export default function AdminPage() {
                       </span>
                     </div>
                     {entry.result && (
-                      <div className="flex gap-2 mt-1">
+                      <div className="flex gap-2 mt-1 text-xs text-slate-400">
                         {entry.result.upserted !== undefined && (
-                          <Badge variant="secondary" className="text-xs">
-                            збережено: {entry.result.upserted}
-                          </Badge>
+                          <span>збережено: {entry.result.upserted}</span>
                         )}
                         {entry.result.success !== undefined && (
-                          <Badge variant="secondary" className="text-xs">
-                            успішно: {entry.result.success}
-                          </Badge>
+                          <span>успішно: {entry.result.success}</span>
                         )}
                         {(entry.result.errors ?? 0) > 0 && (
-                          <Badge variant="destructive" className="text-xs">
+                          <span className="text-red-400">
                             помилок: {entry.result.errors}
-                          </Badge>
+                          </span>
+                        )}
+                        {entry.result.total !== undefined && (
+                          <span>всього: {entry.result.total}</span>
                         )}
                       </div>
                     )}
@@ -398,6 +451,7 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Управління контентом */}
       {activeTab === 'manage' && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
@@ -430,14 +484,9 @@ export default function AdminPage() {
               }}
               className={`max-w-xs ${inputClass}`}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchItems}
-              className="border-slate-700 text-slate-300 hover:text-white"
-            >
+            <button onClick={fetchItems} className={btnOutline}>
               Оновити
-            </Button>
+            </button>
           </div>
 
           <div className={cardClass}>
@@ -480,11 +529,11 @@ export default function AdminPage() {
                       <button
                         onClick={() => handleTranslate(item._id)}
                         disabled={loading !== null}
-                        className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-blue-400 hover:border-blue-800 disabled:opacity-40 transition-colors"
+                        className={btnOutline}
                       >
                         {loading === `translate-item-${item._id}`
-                          ? 'Переклад... '
-                          : 'Перекласти '}
+                          ? 'Переклад...'
+                          : 'Перекласти'}
                       </button>
                       <button
                         onClick={() => handleDelete(item._id)}
@@ -501,7 +550,7 @@ export default function AdminPage() {
                       {deleteConfirm === item._id && (
                         <button
                           onClick={() => setDeleteConfirm(null)}
-                          className="text-xs px-2 py-1 rounded border border-slate-700 text-slate-400 hover:text-white"
+                          className={btnOutline}
                         >
                           Скасувати
                         </button>
@@ -533,6 +582,52 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Управління користувачами */}
+      {activeTab === 'users' && isAdmin && (
+        <div className={cardClass}>
+          <h2 className="text-base font-semibold text-white mb-4">
+            Користувачі
+          </h2>
+          {usersLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-10 rounded bg-slate-800 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {users.map((user) => (
+                <div
+                  key={user._id}
+                  className="flex items-center justify-between p-2 rounded hover:bg-slate-800/50 gap-3"
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium text-sm text-white">
+                      {user.username}
+                    </span>
+                    <span className="text-xs text-slate-500 ml-2">
+                      {user.email}
+                    </span>
+                  </div>
+                  <select
+                    value={user.role}
+                    onChange={(e) => changeRole(user._id, e.target.value)}
+                    className="h-8 rounded border border-slate-700 bg-slate-800 text-slate-200 px-2 text-xs"
+                  >
+                    <option value="player">Гравець</option>
+                    <option value="moderator">Модератор</option>
+                    <option value="admin">Адміністратор</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

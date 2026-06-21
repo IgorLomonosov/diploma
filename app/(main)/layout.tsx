@@ -114,7 +114,9 @@ export default async function MainLayout({
             <span className="hidden sm:block text-sm text-slate-400">
               {session.user.name}
             </span>
-            {(session.user as any).role === 'moderator' && (
+            {(['moderator', 'admin'] as string[]).includes(
+              (session.user as any).role,
+            ) && (
               <Link href="/admin">
                 <Button
                   variant="outline"

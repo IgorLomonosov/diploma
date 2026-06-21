@@ -14,7 +14,7 @@ export default auth((req) => {
   // Захист адмін-панелі — тільки moderator
   if (req.nextUrl.pathname.startsWith('/admin')) {
     const role = (req.auth?.user as any)?.role
-    if (role !== 'moderator') {
+    if (role !== 'moderator' && role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', req.nextUrl))
     }
   }
