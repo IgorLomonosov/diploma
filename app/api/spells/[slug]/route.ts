@@ -4,12 +4,13 @@ import Spell from '@/lib/db/models/Spell'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
+    const { slug } = await params
     await connectDB()
 
-    const spell = await Spell.findOne({ slug: params.slug })
+    const spell = await Spell.findOne({ slug })
 
     if (!spell) {
       return NextResponse.json(
