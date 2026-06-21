@@ -4,12 +4,12 @@ import Monster from '@/lib/db/models/Monster'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
+    const { slug } = await params
     await connectDB()
-
-    const monster = await Monster.findOne({ slug: params.slug })
+    const monster = await Monster.findOne({ slug })
 
     if (!monster) {
       return NextResponse.json(
