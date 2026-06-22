@@ -8,6 +8,9 @@ import Class from '@/lib/db/models/Class'
 import Background from '@/lib/db/models/Background'
 import Feat from '@/lib/db/models/Feat'
 import MagicItem from '@/lib/db/models/MagicItem'
+import Condition from '@/lib/db/models/Condition'
+import Equipment from '@/lib/db/models/Equipment'
+import Section from '@/lib/db/models/Section'
 
 const MODELS: Record<string, any> = {
   monsters: Monster,
@@ -17,6 +20,14 @@ const MODELS: Record<string, any> = {
   backgrounds: Background,
   feats: Feat,
   'magic-items': MagicItem,
+  conditions: Condition,
+  equipment: Equipment,
+  sections: Section,
+}
+
+function checkAuth(session: any) {
+  const role = (session?.user as any)?.role
+  return session && ['moderator', 'admin'].includes(role)
 }
 
 export async function DELETE(
@@ -25,9 +36,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth()
-    const role = (session?.user as any)?.role
-
-    if (!session || !['moderator', 'admin'].includes(role)) {
+    if (!checkAuth(session)) {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
 
@@ -58,7 +67,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth()
-    if (!session || (session.user as any).role !== 'moderator' || 'admin') {
+    if (!checkAuth(session)) {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
 
